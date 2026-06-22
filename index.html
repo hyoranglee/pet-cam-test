@@ -143,6 +143,30 @@
   #light a,#light button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
          padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
 
+  /* Create */
+  #create{padding:14px 16px 28px;}
+  .crcard{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--line);
+          border-radius:20px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);width:100%;text-align:left;}
+  .crcard:active{transform:scale(.98);border-color:var(--coral);}
+  .crcard .emoji{font-size:32px;}
+  .crcard .ct{font-family:"Jua";font-size:17px;color:var(--ink);}
+  .crcard .cd{font-size:12px;color:var(--muted);}
+  .crhint{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+  #result,#player{position:fixed;inset:0;background:rgba(30,20,15,.93);display:none;flex-direction:column;
+          align-items:center;justify-content:center;z-index:45;padding:20px;}
+  #result.on,#player.on{display:flex;}
+  #result img,#player canvas{max-width:100%;max-height:64vh;border-radius:18px;}
+  #result .acts,#player .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+  #result a,#result button,#player button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
+          padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
+  #recHint{color:var(--yellow);font-size:13px;margin-top:10px;min-height:18px;font-family:"Jua";}
+  #bdayBanner{margin:2px 16px 0;background:var(--yellow);color:#7a5b14;border-radius:16px;padding:12px 16px;
+              font-family:"Jua";font-size:14px;text-align:center;box-shadow:var(--shadow);}
+  #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:rgba(40,28,22,.92);
+         color:#fff;padding:11px 20px;border-radius:999px;font-family:"Jua";font-size:14px;opacity:0;pointer-events:none;
+         transition:.25s;z-index:60;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
   #loading{position:absolute;inset:0;background:#241c17;color:#fff;display:flex;
            align-items:center;justify-content:center;text-align:center;padding:24px;
            font-family:"Jua";font-size:16px;line-height:1.7;border-radius:26px;}
@@ -162,7 +186,9 @@
   <div id="tabs">
     <button class="tab on jua" id="tabCam" onclick="showTab('cam')">카메라</button>
     <button class="tab jua" id="tabAlbum" onclick="showTab('album')">앨범</button>
+    <button class="tab jua" id="tabCreate" onclick="showTab('create')">만들기</button>
   </div>
+  <div id="bdayBanner" onclick="makeBirthday()" style="display:none;"></div>
 
   <!-- CAMERA -->
   <div id="camera">
@@ -210,6 +236,15 @@
     <div id="grid"></div>
     <div id="empty" style="display:none;"><div class="big">🐾</div><p>아직 사진이 없어요<br>카메라로 첫 컷을 찍어보세요!</p></div>
   </div>
+
+  <!-- CREATE -->
+  <div id="create" style="display:none;">
+    <button class="crcard" onclick="makeBirthday()"><span class="emoji">🎂</span><span><span class="ct">생일 카드</span><br><span class="cd">우리 아이 생일 축하 카드</span></span></button>
+    <button class="crcard" onclick="makeHighlight()"><span class="emoji">🎬</span><span><span class="ct">하이라이트 영상</span><br><span class="cd">베스트 컷 슬라이드쇼</span></span></button>
+    <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">처음과 지금을 나란히</span></span></button>
+    <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">인생네컷 스타일 4컷</span></span></button>
+    <p class="crhint">사진을 먼저 몇 장 찍어두면 더 예쁘게 만들어져요 🐾</p>
+  </div>
 </div>
 
 <!-- Pet sheet -->
@@ -254,6 +289,22 @@
     <button onclick="setRepresentative()">대표 얼굴로</button>
     <button onclick="deleteCurrent()">삭제</button>
     <button onclick="closeLight()">닫기</button>
+  </div></div>
+
+<!-- Result (image output) -->
+<div id="result"><img id="resImg" alt="">
+  <div class="acts">
+    <a id="resDl" download="">저장</a>
+    <button onclick="closeResult()">닫기</button>
+  </div></div>
+
+<!-- Player (highlight video) -->
+<div id="player">
+  <canvas id="plCanvas" width="1080" height="1080"></canvas>
+  <div id="recHint"></div>
+  <div class="acts">
+    <button id="plSave" onclick="saveHighlightVideo()">영상 저장</button>
+    <button onclick="closePlayer()">닫기</button>
   </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
@@ -419,7 +470,9 @@ async function makeFaceAvatar(dataUrl){const img=await loadImg(dataUrl);let box=
 let curTab='cam';
 function showTab(t){curTab=t;document.getElementById('camera').style.display=t==='cam'?'block':'none';
   document.getElementById('album').style.display=t==='album'?'block':'none';
-  tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');if(t==='album')renderAlbum();}
+  document.getElementById('create').style.display=t==='create'?'block':'none';
+  tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');tabCreate.classList.toggle('on',t==='create');
+  if(t==='album')renderAlbum();}
 function renderPetStrip(){const strip=document.getElementById('petStrip');strip.innerHTML='';
   [...pets].reverse().forEach(p=>{const d=document.createElement('button');d.className='petface'+(p.id===activeId?' on':'');
     const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${AV[p.type]}</span>`;
@@ -476,7 +529,8 @@ function refreshHeader(){const p=active();const av=document.getElementById('petA
     document.getElementById('petsub').textContent=`${p.type==='dog'?'강아지':p.type==='cat'?'고양이':'기타'} · ${ageText(p)}`;
     if(p.avatarUrl){av.textContent='';av.style.backgroundImage=`url(${p.avatarUrl})`;av.style.backgroundSize='cover';av.style.backgroundPosition='center';}
     else{av.textContent=AV[p.type];av.style.backgroundImage='';}}
-  else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';av.textContent='🐾';av.style.backgroundImage='';}}
+  else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';av.textContent='🐾';av.style.backgroundImage='';}
+  if(typeof checkBirthday==='function')checkBirthday();}
 function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=new Date(p.birthMs);
   let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();if(m<0){y--;m+=12;}
   return y<=0?`${Math.max(m,0)}개월`:m===0?`${y}살`:`${y}살 ${m}개월`;}
@@ -506,6 +560,101 @@ function savePet(){const name=document.getElementById('inName').value.trim();if(
   const bday=draft.bday?new Date(document.getElementById('inBday').value).getTime():null;
   const pet={id:'pet'+Date.now(),name,type:draft.type,sex:draft.sex,birthMs:isNaN(bday)?null:bday};
   pets.push(pet);activeId=pet.id;savePets();refreshHeader();closeSheets();prevGray=null;if(curTab==='album')renderAlbum();}
+
+/* ---------- create: shareable content ---------- */
+function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+function cover(x,img,dx,dy,dw,dh){const ir=img.width/img.height,dr=dw/dh;let sw,sh,sx,sy;
+  if(ir>dr){sh=img.height;sw=sh*dr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/dr;sx=0;sy=(img.height-sh)/2;}
+  x.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);}
+async function ensureFont(){try{await document.fonts.load('80px "Jua"');await document.fonts.ready;}catch(e){}}
+function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
+  t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1900);}
+function needPet(){const p=active();if(!p){toast('먼저 아이를 등록해 주세요');return null;}return p;}
+function showResult(dataUrl,filename){document.getElementById('resImg').src=dataUrl;
+  const dl=document.getElementById('resDl');dl.href=dataUrl;dl.download=filename;document.getElementById('result').classList.add('on');}
+function closeResult(){document.getElementById('result').classList.remove('on');}
+
+async function makeBirthday(){const p=needPet();if(!p)return;
+  const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 한 장 찍어주세요');return;}
+  await ensureFont();const img=await loadImg(ph[0].dataUrl);const S=1080,c=mkCanvas(S,S),x=c.getContext('2d');
+  x.fillStyle='#FFF6EF';x.fillRect(0,0,S,S);const cols=['#FF7E67','#5FC9A6','#FFC861','#ED93B1'];
+  for(let i=0;i<46;i++){x.fillStyle=cols[i%4];x.globalAlpha=.85;x.beginPath();x.arc(Math.random()*S,Math.random()*S,6+Math.random()*13,0,7);x.fill();}x.globalAlpha=1;
+  x.lineWidth=22;x.strokeStyle='#FF7E67';rrect(x,28,28,S-56,S-56,38);x.stroke();
+  x.fillStyle='#5A463B';x.textAlign='center';x.font='400 84px "Jua",sans-serif';x.fillText('🎂 생일 축하해!',S/2,172);
+  const R=290,cx=S/2,cy=502;x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();cover(x,img,cx-R,cy-R,R*2,R*2);x.restore();
+  x.lineWidth=14;x.strokeStyle='#FFC861';x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
+  x.fillStyle='#5A463B';x.font='400 96px "Jua",sans-serif';x.fillText(p.name,S/2,892);
+  x.fillStyle='#FF7E67';x.font='400 56px "Jua",sans-serif';x.fillText('오늘 '+ageText(p)+'! 🐾',S/2,966);
+  showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_birthday.jpg');}
+
+async function makeFourCut(){const p=needPet();if(!p)return;
+  const ph=await photosFor(p.id);if(ph.length<4){toast('사진 4장 이상이 필요해요');return;}
+  await ensureFont();const pick=ph.slice(0,4),W=720,pad=34,gap=22,cell=Math.round((W-pad*2)*0.72);
+  const H=pad+cell*4+gap*3+pad+60,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FF7E67';x.fillRect(0,0,W,H);
+  for(let i=0;i<4;i++){const img=await loadImg(pick[i].dataUrl);const y=pad+i*(cell+gap);
+    rrect(x,pad,y,W-pad*2,cell,16);x.save();x.clip();cover(x,img,pad,y,W-pad*2,cell);x.restore();}
+  const t=new Date();x.fillStyle='#fff';x.textAlign='center';x.font='400 40px "Jua",sans-serif';
+  x.fillText(p.name+' 🐾 '+t.getFullYear()+'.'+(t.getMonth()+1)+'.'+t.getDate(),W/2,H-26);
+  showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_4cut.jpg');}
+
+async function makeThenNow(){const p=needPet();if(!p)return;
+  const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
+  await ensureFont();const a=await loadImg(ph[ph.length-1].dataUrl),b=await loadImg(ph[0].dataUrl);
+  const W=1600,H=920,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,W,H);
+  const pad=30,iw=(W-pad*3)/2,iy=110,ih=H-iy-110;
+  rrect(x,pad,iy,iw,ih,20);x.save();x.clip();cover(x,a,pad,iy,iw,ih);x.restore();
+  rrect(x,pad*2+iw,iy,iw,ih,20);x.save();x.clip();cover(x,b,pad*2+iw,iy,iw,ih);x.restore();
+  x.fillStyle='#5A463B';x.textAlign='center';x.font='400 58px "Jua",sans-serif';
+  x.fillText('그때',pad+iw/2,80);x.fillText('지금',pad*2+iw+iw/2,80);
+  x.fillStyle='#FF7E67';x.font='400 52px "Jua",sans-serif';x.fillText(p.name+' 🐾',W/2,H-40);
+  showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_thennow.jpg');}
+
+/* highlight slideshow + webm export */
+let hlRAF=null,hlMusic=null,hlImgs=[],hlPet=null;
+async function makeHighlight(){const p=needPet();if(!p)return;
+  const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
+  await ensureFont();hlImgs=[];for(const it of ph.slice(0,12))hlImgs.push(await loadImg(it.dataUrl));hlPet=p;
+  const canRec=!!(document.getElementById('plCanvas').captureStream&&window.MediaRecorder);
+  document.getElementById('plSave').style.display=canRec?'inline-block':'none';
+  document.getElementById('recHint').textContent='';document.getElementById('player').classList.add('on');playHighlight();}
+function playHighlight(){const c=document.getElementById('plCanvas'),x=c.getContext('2d'),S=c.width;
+  const DUR=2100,FADE=480;let idx=0,t0=performance.now();stopHighlight();startMusic();
+  function zoom(img,z){const s=Math.min(img.width,img.height),sx=(img.width-s)/2,sy=(img.height-s)/2,d=S*z,off=(d-S)/2;
+    x.drawImage(img,sx,sy,s,s,-off,-off,d,d);}
+  function cap(){const n=hlPet.name+' 🐾';x.font='400 46px "Jua",sans-serif';x.textAlign='left';x.textBaseline='middle';
+    const w=x.measureText(n).width+40;x.fillStyle='rgba(0,0,0,.42)';rrect(x,28,S-94,w,60,30);x.fill();
+    x.fillStyle='#fff';x.fillText(n,50,S-64);x.textBaseline='alphabetic';}
+  function frame(now){const el=now-t0;x.fillStyle='#000';x.fillRect(0,0,S,S);
+    zoom(hlImgs[idx%hlImgs.length],1.04+0.12*Math.min(el/DUR,1));
+    if(el>DUR-FADE){x.globalAlpha=(el-(DUR-FADE))/FADE;zoom(hlImgs[(idx+1)%hlImgs.length],1.04);x.globalAlpha=1;}
+    cap();if(el>=DUR){idx++;t0=now;}hlRAF=requestAnimationFrame(frame);}
+  hlRAF=requestAnimationFrame(frame);}
+function startMusic(){stopMusic();try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+  const notes=[523,659,784,659,587,698,880,698];let i=0;
+  hlMusic=setInterval(()=>{const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=notes[i%notes.length];
+    g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.exponentialRampToValueAtTime(.10,actx.currentTime+.04);
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+.45);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.45);i++;},430);}
+function stopMusic(){if(hlMusic){clearInterval(hlMusic);hlMusic=null;}}
+function stopHighlight(){if(hlRAF){cancelAnimationFrame(hlRAF);hlRAF=null;}stopMusic();}
+function closePlayer(){stopHighlight();document.getElementById('player').classList.remove('on');}
+function saveHighlightVideo(){const c=document.getElementById('plCanvas');
+  if(!c.captureStream||!window.MediaRecorder){toast('이 브라우저는 영상 저장을 지원하지 않아요');return;}
+  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];let mime='video/webm';
+  for(const m of mimes)if(MediaRecorder.isTypeSupported(m)){mime=m;break;}
+  const rec=new MediaRecorder(c.captureStream(30),{mimeType:mime});const chunks=[];
+  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=()=>{const blob=new Blob(chunks,{type:mime});const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=(hlPet&&hlPet.name||'pet')+'_highlight.webm';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),6000);document.getElementById('recHint').textContent='저장됐어요! 🎬';};
+  const dur=Math.min(hlImgs.length,12)*2100+300;rec.start();
+  document.getElementById('recHint').textContent='영상 만드는 중… ('+Math.round(dur/1000)+'초)';
+  setTimeout(()=>{try{rec.stop();}catch(e){}},dur);}
+
+function checkBirthday(){const b=document.getElementById('bdayBanner');if(!b)return;const p=active();
+  if(p&&p.birthMs){const d=new Date(p.birthMs),n=new Date();
+    if(d.getMonth()===n.getMonth()&&d.getDate()===n.getDate()){b.innerHTML='🎂 오늘 '+p.name+' 생일! 카드 만들기 →';b.style.display='block';return;}}
+  b.style.display='none';}
 
 /* ---------- init ---------- */
 (async function(){
