@@ -166,6 +166,24 @@
          color:#fff;padding:11px 20px;border-radius:999px;font-family:"Jua";font-size:14px;opacity:0;pointer-events:none;
          transition:.25s;z-index:60;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
+  #picker.on{display:flex;}
+  .pkbox{background:var(--cream);width:100%;max-width:460px;max-height:84vh;border-radius:24px;display:flex;
+         flex-direction:column;padding:18px;box-shadow:var(--shadow);}
+  .pkbox h2{font-family:"Jua";font-size:18px;text-align:center;margin:2px 0 12px;}
+  #pkGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;flex:1;}
+  #pkGrid .cell{position:relative;aspect-ratio:1;}
+  #pkGrid img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block;}
+  #pkGrid .cell.sel img{outline:3px solid var(--coral);outline-offset:-3px;}
+  .pkbadge{position:absolute;top:5px;left:5px;background:var(--coral);color:#fff;font-family:"Jua";
+           font-size:11px;padding:2px 9px;border-radius:999px;}
+  .pkbox .acts{display:flex;gap:10px;margin-top:12px;}
+  .pkbox .acts button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;
+                      font-family:"Jua";font-size:15px;color:var(--ink);}
+  #pkMake{background:var(--coral)!important;color:#fff!important;border-color:var(--coral)!important;}
+  #pkMake:disabled{background:#E7CFC6!important;border-color:#E7CFC6!important;}
+  .petdel{font-size:18px;padding:2px 4px;opacity:.65;}
+  .avatar{background-size:cover;background-position:center;}
 
   #loading{position:absolute;inset:0;background:#241c17;color:#fff;display:flex;
            align-items:center;justify-content:center;text-align:center;padding:24px;
@@ -306,6 +324,16 @@
     <button id="plSave" onclick="saveHighlightVideo()">영상 저장</button>
     <button onclick="closePlayer()">닫기</button>
   </div></div>
+
+<!-- Photo picker (then vs now) -->
+<div id="picker"><div class="pkbox">
+  <h2 id="pkTitle">사진을 고르세요</h2>
+  <div id="pkGrid"></div>
+  <div class="acts">
+    <button id="pkMake" onclick="confirmThenNow()" disabled>만들기</button>
+    <button onclick="closePicker()">닫기</button>
+  </div>
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
@@ -537,9 +565,21 @@ function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=n
 function petSheetOpen(){return document.getElementById('petSheet').classList.contains('on')||document.getElementById('addSheet').classList.contains('on');}
 function openPets(){const list=document.getElementById('petList');list.innerHTML='';
   pets.forEach(p=>{const r=document.createElement('div');r.className='petrow'+(p.id===activeId?' on':'');
-    r.innerHTML=`<span class="avatar">${AV[p.type]}</span><div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${ageText(p)}</div></div>${p.id===activeId?'<span style="color:var(--coral)">✓</span>':''}`;
-    r.onclick=()=>{activeId=p.id;savePets();refreshHeader();closeSheets();};list.appendChild(r);});
+    const av=p.avatarUrl?`<span class="avatar" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="avatar">${AV[p.type]}</span>`;
+    r.innerHTML=`${av}<div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${ageText(p)}</div></div>`+
+      `${p.id===activeId?'<span style="color:var(--coral);margin-right:4px">✓</span>':''}<span class="petdel" title="삭제">🗑️</span>`;
+    r.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();};
+    r.querySelector('.petdel').onclick=e=>{e.stopPropagation();deletePet(p.id);};
+    list.appendChild(r);});
   document.getElementById('petSheet').classList.add('on');}
+async function deletePet(id){const p=pets.find(x=>x.id===id);if(!p)return;
+  if(!confirm(`'${p.name}'와(과) 모든 사진을 삭제할까요? 되돌릴 수 없어요.`))return;
+  const ph=await photosFor(id);for(const x of ph)await idbDel('photos',x.id);
+  pets=pets.filter(x=>x.id!==id);
+  if(activeId===id)activeId=pets.length?pets[pets.length-1].id:null;
+  savePets();refreshHeader();
+  if(pets.length===0){closeSheets();openAdd();}else openPets();
+  if(curTab==='album')renderAlbum();}
 function closeSheets(){document.getElementById('petSheet').classList.remove('on');document.getElementById('addSheet').classList.remove('on');}
 document.querySelectorAll('.sheet').forEach(s=>s.onclick=e=>{if(e.target===s)closeSheets();});
 
@@ -598,9 +638,24 @@ async function makeFourCut(){const p=needPet();if(!p)return;
   x.fillText(p.name+' 🐾 '+t.getFullYear()+'.'+(t.getMonth()+1)+'.'+t.getDate(),W/2,H-26);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_4cut.jpg');}
 
+let pkPhotos=[],pkThen=null,pkNow=null;
 async function makeThenNow(){const p=needPet();if(!p)return;
   const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
-  await ensureFont();const a=await loadImg(ph[ph.length-1].dataUrl),b=await loadImg(ph[0].dataUrl);
+  pkPhotos=ph;pkThen=null;pkNow=null;renderPicker();document.getElementById('picker').classList.add('on');}
+function renderPicker(){const g=document.getElementById('pkGrid');g.innerHTML='';
+  document.getElementById('pkTitle').textContent=!pkThen?'\u201c그때\u201d 사진을 고르세요':(!pkNow?'\u201c지금\u201d 사진을 고르세요':'좋아요! 만들기를 눌러요');
+  pkPhotos.forEach(p=>{const cell=document.createElement('div');cell.className='cell';
+    const sel=p.id===pkThen?'그때':(p.id===pkNow?'지금':null);if(sel)cell.classList.add('sel');
+    cell.innerHTML=`<img src="${p.dataUrl}">`+(sel?`<span class="pkbadge">${sel}</span>`:'');
+    cell.onclick=()=>pickThenNow(p.id);g.appendChild(cell);});
+  document.getElementById('pkMake').disabled=!(pkThen&&pkNow);}
+function pickThenNow(id){
+  if(pkThen===id)pkThen=null;else if(pkNow===id)pkNow=null;
+  else if(!pkThen)pkThen=id;else pkNow=id;renderPicker();}
+function closePicker(){document.getElementById('picker').classList.remove('on');}
+async function confirmThenNow(){const p=active();const a=pkPhotos.find(x=>x.id===pkThen),b=pkPhotos.find(x=>x.id===pkNow);
+  if(!a||!b||!p)return;closePicker();await renderThenNow(p,a.dataUrl,b.dataUrl);}
+async function renderThenNow(p,aUrl,bUrl){await ensureFont();const a=await loadImg(aUrl),b=await loadImg(bUrl);
   const W=1600,H=920,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,W,H);
   const pad=30,iw=(W-pad*3)/2,iy=110,ih=H-iy-110;
   rrect(x,pad,iy,iw,ih,20);x.save();x.clip();cover(x,a,pad,iy,iw,ih);x.restore();
