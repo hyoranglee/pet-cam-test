@@ -83,10 +83,22 @@
 
   /* Album */
   #album{padding:8px 16px 24px;}
+  #petStrip{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scrollbar-width:none;}
+  #petStrip::-webkit-scrollbar{display:none;}
+  .petface{flex:0 0 auto;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;}
+  .petface .fc{width:58px;height:58px;border-radius:50%;background:var(--yellow);background-size:cover;background-position:center;
+       display:flex;align-items:center;justify-content:center;font-size:26px;border:3px solid transparent;box-shadow:var(--shadow);}
+  .petface.on .fc{border-color:var(--coral);}
+  .petface .fn{font-family:"Jua";font-size:12px;color:var(--muted);max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .petface.on .fn{color:var(--coral);}
+  .petface.add .fc{background:#FFF1ED;color:var(--coral);border:2px dashed var(--coral);font-size:28px;}
   #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
   #grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);}
   #empty{text-align:center;color:var(--muted);padding:60px 20px;}
   #empty .big{font-size:48px;}#empty p{font-family:"Jua";font-size:16px;margin:10px 0 0;}
+  .snd.voicechip{display:inline-flex;align-items:center;gap:8px;}
+  .vdel{font-size:11px;width:18px;height:18px;border-radius:50%;background:rgba(90,70,59,.12);
+        display:inline-flex;align-items:center;justify-content:center;}
 
   /* Sheets / modal */
   .sheet{position:fixed;inset:0;background:rgba(60,40,30,.45);display:none;
@@ -193,7 +205,11 @@
   </div>
 
   <!-- ALBUM -->
-  <div id="album" style="display:none;"><div id="grid"></div><div id="empty" style="display:none;"><div class="big">🐾</div><p>아직 사진이 없어요<br>카메라로 첫 컷을 찍어보세요!</p></div></div>
+  <div id="album" style="display:none;">
+    <div id="petStrip"></div>
+    <div id="grid"></div>
+    <div id="empty" style="display:none;"><div class="big">🐾</div><p>아직 사진이 없어요<br>카메라로 첫 컷을 찍어보세요!</p></div>
+  </div>
 </div>
 
 <!-- Pet sheet -->
@@ -235,6 +251,7 @@
   <div class="acts">
     <a id="lightDl" download="pet.jpg">저장</a>
     <button id="saveFxBtn" onclick="saveEnhanced()" style="display:none">앨범에 추가</button>
+    <button onclick="setRepresentative()">대표 얼굴로</button>
     <button onclick="deleteCurrent()">삭제</button>
     <button onclick="closeLight()">닫기</button>
   </div></div>
@@ -296,11 +313,17 @@ async function renderSounds(){const row=document.getElementById('sounds');row.in
     const snd={kind:'syn',name:k,key:'syn:'+k};if(selectedSound&&selectedSound.key===snd.key)b.classList.add('sel');
     b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
   const voices=await idbAll('voices');
-  voices.forEach(v=>{const b=document.createElement('button');b.className='snd';b.textContent='🎵 '+v.name;
-    const snd={kind:'voice',dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)b.classList.add('sel');
-    b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
+  voices.forEach(v=>{const wrap=document.createElement('div');wrap.className='snd voicechip';
+    const snd={kind:'voice',dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)wrap.classList.add('sel');
+    const lbl=document.createElement('span');lbl.textContent='🎵 '+v.name;lbl.onclick=()=>chooseSound(wrap,snd);
+    const del=document.createElement('span');del.className='vdel';del.textContent='✕';
+    del.onclick=e=>{e.stopPropagation();deleteVoice(v.id);};
+    wrap.appendChild(lbl);wrap.appendChild(del);row.appendChild(wrap);});
   const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';
   rec.onclick=recordVoice;row.appendChild(rec);}
+async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))return;
+  if(selectedSound&&selectedSound.key==='voice:'+id)selectedSound=null;
+  await idbDel('voices',id);renderSounds();}
 async function recordVoice(){const btn=document.getElementById('recBtn');
   try{const s=await navigator.mediaDevices.getUserMedia({audio:true});
     const rec=new MediaRecorder(s);const chunks=[];rec.ondataavailable=e=>chunks.push(e.data);
@@ -373,15 +396,38 @@ function finishBurst(){const frames=burst;burst=[];lastShot=Date.now();streakN=0
 function manualShot(){playSelected();if(state==='capturing')return;burst=[grab()];state='capturing';setStatus('찰칵! 연사 중');}
 async function saveShot(cv){const dataUrl=compress(cv);const pet=active();if(!pet){openAdd();return;}
   await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl,ts:Date.now()});
+  const i=pets.findIndex(p=>p.id===pet.id);
+  if(i>=0&&!pets[i].avatarUrl){pets[i].avatarUrl=await makeFaceAvatar(dataUrl);savePets();refreshHeader();}
   setStatus('앨범에 저장됐어요!');setTimeout(()=>{if(state!=='capturing')setStatus('우리 아이 찾는 중…');},1200);
   if(curTab==='album')renderAlbum();}
+
+/* face cutout avatar: crops to the detected pet (head-biased), circular */
+function loadImg(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
+async function makeFaceAvatar(dataUrl){const img=await loadImg(dataUrl);let box=null;
+  try{const preds=await model.detect(img);let ba=0;
+    for(const p of preds){if(!SPECIES.includes(p.class))continue;const[x,y,w,h]=p.bbox;if(w*h>ba){ba=w*h;box=p.bbox;}}}catch(e){}
+  const S=220,c=document.createElement('canvas');c.width=c.height=S;const ctx=c.getContext('2d');
+  ctx.beginPath();ctx.arc(S/2,S/2,S/2,0,Math.PI*2);ctx.clip();
+  let sx,sy,side;
+  if(box){const[x,y,w,h]=box;side=Math.min(w,h)*0.95;
+    sx=x+w/2-side/2;sy=y+h*0.30-side/2;                 // bias upward toward the head
+    sx=Math.max(0,Math.min(sx,img.naturalWidth-side));sy=Math.max(0,Math.min(sy,img.naturalHeight-side));}
+  else{side=Math.min(img.naturalWidth,img.naturalHeight);sx=(img.naturalWidth-side)/2;sy=(img.naturalHeight-side)/2;}
+  ctx.drawImage(img,sx,sy,side,side,0,0,S,S);return c.toDataURL('image/jpeg',.9);}
 
 /* ---------- views ---------- */
 let curTab='cam';
 function showTab(t){curTab=t;document.getElementById('camera').style.display=t==='cam'?'block':'none';
   document.getElementById('album').style.display=t==='album'?'block':'none';
   tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');if(t==='album')renderAlbum();}
-async function renderAlbum(){const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
+function renderPetStrip(){const strip=document.getElementById('petStrip');strip.innerHTML='';
+  [...pets].reverse().forEach(p=>{const d=document.createElement('button');d.className='petface'+(p.id===activeId?' on':'');
+    const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${AV[p.type]}</span>`;
+    d.innerHTML=fc+`<span class="fn">${p.name}</span>`;
+    d.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();renderAlbum();};strip.appendChild(d);});
+  const add=document.createElement('button');add.className='petface add';
+  add.innerHTML='<span class="fc">+</span><span class="fn">추가</span>';add.onclick=openAdd;strip.appendChild(add);}
+async function renderAlbum(){renderPetStrip();const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
   if(!pet){grid.innerHTML='';empty.style.display='block';return;}
   const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
   ph.forEach(p=>{const img=document.createElement('img');img.src=p.dataUrl;img.onclick=()=>openLight(p);grid.appendChild(img);});}
@@ -419,14 +465,18 @@ function enhance(srcUrl,p){return new Promise(res=>{const img=new Image();img.on
   ctx.putImageData(im,0,0);res(c.toDataURL('image/jpeg',.92));};img.src=srcUrl;});}
 async function saveEnhanced(){if(!curEnhancedUrl)return;const pet=active();
   await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl:curEnhancedUrl,ts:Date.now()});closeLight();renderAlbum();}
+async function setRepresentative(){const pet=active();if(!pet||!curPhoto)return;
+  const src=curEnhancedUrl||curPhoto.dataUrl;const av=await makeFaceAvatar(src);
+  const i=pets.findIndex(p=>p.id===pet.id);if(i>=0){pets[i].avatarUrl=av;savePets();refreshHeader();renderPetStrip();}closeLight();}
 
 /* pet header + sheets */
 const AV={dog:'🐶',cat:'🐱',other:'🐾'};
-function refreshHeader(){const p=active();
+function refreshHeader(){const p=active();const av=document.getElementById('petAvatar');
   if(p){document.getElementById('petname').textContent=p.name;
     document.getElementById('petsub').textContent=`${p.type==='dog'?'강아지':p.type==='cat'?'고양이':'기타'} · ${ageText(p)}`;
-    document.getElementById('petAvatar').textContent=AV[p.type];}
-  else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';}}
+    if(p.avatarUrl){av.textContent='';av.style.backgroundImage=`url(${p.avatarUrl})`;av.style.backgroundSize='cover';av.style.backgroundPosition='center';}
+    else{av.textContent=AV[p.type];av.style.backgroundImage='';}}
+  else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';av.textContent='🐾';av.style.backgroundImage='';}}
 function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=new Date(p.birthMs);
   let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();if(m<0){y--;m+=12;}
   return y<=0?`${Math.max(m,0)}개월`:m===0?`${y}살`:`${y}살 ${m}개월`;}
@@ -455,7 +505,7 @@ function checkAdd(){document.getElementById('saveBtn').disabled=!document.getEle
 function savePet(){const name=document.getElementById('inName').value.trim();if(!name)return;
   const bday=draft.bday?new Date(document.getElementById('inBday').value).getTime():null;
   const pet={id:'pet'+Date.now(),name,type:draft.type,sex:draft.sex,birthMs:isNaN(bday)?null:bday};
-  pets.push(pet);activeId=pet.id;savePets();refreshHeader();closeSheets();prevGray=null;}
+  pets.push(pet);activeId=pet.id;savePets();refreshHeader();closeSheets();prevGray=null;if(curTab==='album')renderAlbum();}
 
 /* ---------- init ---------- */
 (async function(){
