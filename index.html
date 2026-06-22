@@ -3,213 +3,419 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>반려동물 카메라 — 자동 셔터 테스트</title>
+<title>멍냥 카메라 — 자동 셔터 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0d0d0f; --panel:#1a1a1f; --line:#2a2a32; --txt:#f2f2f4; --muted:#9a9aa4; --ok:#34d27b; --info:#4f9dff; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; background:var(--bg); color:var(--txt);
-         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-  #stage { position:relative; width:100vw; max-width:560px; margin:0 auto; aspect-ratio:3/4; background:#000; overflow:hidden; }
-  video, #overlay { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-  #status { position:absolute; top:12px; left:50%; transform:translateX(-50%);
-            background:rgba(0,0,0,.55); backdrop-filter:blur(8px); padding:7px 14px; border-radius:999px;
-            font-size:14px; font-weight:500; white-space:nowrap; }
-  #lock { position:absolute; top:50px; left:50%; transform:translateX(-50%);
-          width:140px; height:4px; border-radius:2px; background:rgba(255,255,255,.18); overflow:hidden; }
-  #lockfill { height:100%; width:0%; background:var(--ok); transition:width .12s; }
-  #sounds { position:absolute; bottom:84px; left:0; right:0; display:flex; gap:8px; padding:0 14px;
-            overflow-x:auto; scrollbar-width:none; }
-  #sounds::-webkit-scrollbar { display:none; }
-  .snd { flex:0 0 auto; background:rgba(255,255,255,.12); border:none; color:var(--txt);
-         padding:8px 14px; border-radius:999px; font-size:13px; }
-  .snd:active { background:var(--info); }
-  #shutter { position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
-             width:58px; height:58px; border-radius:50%; background:#fff; border:4px solid rgba(255,255,255,.4); }
-  #panel { max-width:560px; margin:0 auto; padding:14px 16px 28px; }
-  h2 { font-size:15px; font-weight:600; margin:18px 0 10px; }
-  .row { display:flex; align-items:center; gap:12px; margin:12px 0; font-size:13px; color:var(--muted); }
-  .row input[type=range] { flex:1; accent-color:var(--info); }
-  .row b { color:var(--txt); min-width:42px; text-align:right; font-variant-numeric:tabular-nums; }
-  #gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
-  #gallery figure { margin:0; position:relative; }
-  #gallery img { width:100%; border-radius:8px; display:block; }
-  #gallery .score { position:absolute; bottom:4px; left:4px; background:rgba(0,0,0,.6);
-                    font-size:11px; padding:2px 6px; border-radius:6px; }
-  #gallery a { position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); color:#fff;
-               font-size:11px; padding:3px 7px; border-radius:6px; text-decoration:none; }
-  .hint { font-size:12px; color:var(--muted); line-height:1.6; }
-  #loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-             background:#000; font-size:14px; color:var(--muted); text-align:center; padding:24px; }
+  :root{
+    --cream:#FFF6EF; --card:#FFFFFF; --coral:#FF7E67; --coral-d:#E8543B;
+    --mint:#5FC9A6; --yellow:#FFC861; --ink:#5A463B; --muted:#AC9A8E; --line:#F1E4D9;
+    --shadow:0 6px 20px rgba(120,80,50,.10);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--cream);color:var(--ink);
+       font-family:"Noto Sans KR",-apple-system,sans-serif;}
+  .jua{font-family:"Jua",sans-serif;font-weight:400;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* Header */
+  #topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 6px;}
+  #petchip{display:flex;align-items:center;gap:10px;background:var(--card);border:none;
+           border-radius:999px;padding:6px 14px 6px 6px;box-shadow:var(--shadow);cursor:pointer;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--yellow);
+          display:flex;align-items:center;justify-content:center;font-size:20px;}
+  #petname{font-size:16px;}#petsub{font-size:11px;color:var(--muted);}
+  #logo{margin-left:auto;font-size:22px;color:var(--coral);}
+
+  /* Tabs */
+  #tabs{display:flex;gap:6px;background:#F4E7DC;border-radius:999px;padding:4px;margin:8px 16px;}
+  .tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;
+       font-size:15px;color:var(--muted);font-family:"Jua";}
+  .tab.on{background:var(--card);color:var(--coral);box-shadow:0 2px 8px rgba(120,80,50,.12);}
+
+  /* Camera */
+  #stage{position:relative;margin:8px 16px;border-radius:26px;overflow:hidden;
+         background:#241c17;aspect-ratio:3/4;box-shadow:var(--shadow);}
+  video,#overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #status{position:absolute;top:14px;left:50%;transform:translateX(-50%);
+          background:rgba(255,255,255,.92);color:var(--ink);padding:8px 16px;border-radius:999px;
+          font-family:"Jua";font-size:15px;white-space:nowrap;box-shadow:var(--shadow);}
+  #lockwrap{position:absolute;top:52px;left:50%;transform:translateX(-50%);
+            width:130px;height:6px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;}
+  #lockfill{height:100%;width:0;background:var(--mint);border-radius:3px;transition:width .12s;}
+
+  /* Controls below cam */
+  #controls{padding:4px 16px 18px;}
+  #sounds{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;}
+  #sounds::-webkit-scrollbar{display:none;}
+  .snd{flex:0 0 auto;background:var(--card);border:2px solid var(--line);color:var(--ink);
+       padding:9px 15px;border-radius:999px;font-size:14px;font-family:"Jua";box-shadow:var(--shadow);}
+  .snd:active{background:var(--coral);color:#fff;border-color:var(--coral);transform:scale(.95);}
+  .snd.rec{color:var(--coral);border-color:var(--coral);}
+  .snd.recording{background:var(--coral);color:#fff;animation:pulse .8s infinite;}
+  @keyframes pulse{50%{opacity:.6;}}
+
+  #shutterrow{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:14px;}
+  #gear{width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--card);
+        font-size:20px;color:var(--muted);box-shadow:var(--shadow);}
+  #shutter{width:78px;height:78px;border-radius:50%;border:6px solid #fff;background:var(--coral);
+           box-shadow:0 6px 18px rgba(232,84,59,.4);display:flex;align-items:center;justify-content:center;}
+  #shutter:active{transform:scale(.92);}
+  #shutter svg{width:38px;height:38px;fill:#fff;}
+  #spacer{width:46px;}
+
+  /* Advanced drawer */
+  #adv{margin:0 16px 16px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);
+       padding:16px;display:none;}
+  #adv h3{font-family:"Jua";font-size:15px;margin:0 0 4px;}
+  #adv .hint{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
+  .sens{display:flex;gap:8px;margin-bottom:14px;}
+  .sens button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 0;
+               font-family:"Jua";font-size:14px;color:var(--muted);}
+  .sens button.on{border-color:var(--coral);color:var(--coral);background:#FFF1ED;}
+  .raw{font-size:11px;color:var(--muted);}
+  .raw summary{cursor:pointer;margin-bottom:8px;}
+  .row{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:12px;}
+  .row input[type=range]{flex:1;accent-color:var(--coral);}
+  .row b{min-width:40px;text-align:right;color:var(--ink);}
+
+  /* Album */
+  #album{padding:8px 16px 24px;}
+  #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  #grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);}
+  #empty{text-align:center;color:var(--muted);padding:60px 20px;}
+  #empty .big{font-size:48px;}#empty p{font-family:"Jua";font-size:16px;margin:10px 0 0;}
+
+  /* Sheets / modal */
+  .sheet{position:fixed;inset:0;background:rgba(60,40,30,.45);display:none;
+         align-items:flex-end;justify-content:center;z-index:30;}
+  .sheet.on{display:flex;}
+  .sheetbox{background:var(--cream);width:100%;max-width:480px;border-radius:26px 26px 0 0;
+            padding:22px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.2);}
+  .sheetbox h2{font-family:"Jua";font-size:20px;margin:0 0 16px;text-align:center;}
+  label.fld{display:block;font-size:12px;color:var(--muted);margin:14px 0 5px;}
+  .input{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;
+         font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
+  .seg{display:flex;gap:8px;}
+  .seg button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:11px 0;
+              font-family:"Jua";font-size:15px;color:var(--muted);}
+  .seg button.on{border-color:var(--coral);color:var(--coral);background:#FFF1ED;}
+  .toggle{display:flex;align-items:center;justify-content:space-between;margin:16px 0 0;font-size:15px;}
+  .sw{width:48px;height:28px;border-radius:999px;background:#E2D3C6;position:relative;transition:.2s;}
+  .sw.on{background:var(--mint);}
+  .sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;}
+  .sw.on i{left:23px;}
+  .bigbtn{width:100%;margin-top:22px;border:none;background:var(--coral);color:#fff;
+          border-radius:16px;padding:15px;font-family:"Jua";font-size:17px;box-shadow:var(--shadow);}
+  .bigbtn:disabled{background:#E7CFC6;}
+  .petlist{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+  .petrow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);
+          border-radius:16px;padding:10px 14px;}
+  .petrow.on{border-color:var(--coral);}
+  .petrow .nm{font-family:"Jua";font-size:16px;}.petrow .sb{font-size:11px;color:var(--muted);}
+  .addbtn{width:100%;border:2px dashed var(--coral);color:var(--coral);background:#FFF7F4;
+          border-radius:16px;padding:13px;font-family:"Jua";font-size:15px;}
+
+  /* Lightbox */
+  #light{position:fixed;inset:0;background:rgba(30,20,15,.92);display:none;flex-direction:column;
+         align-items:center;justify-content:center;z-index:40;padding:20px;}
+  #light.on{display:flex;}
+  #light img{max-width:100%;max-height:72vh;border-radius:18px;}
+  #light .acts{display:flex;gap:12px;margin-top:18px;}
+  #light a,#light button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
+         padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
+
+  #loading{position:absolute;inset:0;background:#241c17;color:#fff;display:flex;
+           align-items:center;justify-content:center;text-align:center;padding:24px;
+           font-family:"Jua";font-size:16px;line-height:1.7;border-radius:26px;}
+  .paw{font-size:30px;}
 </style>
 </head>
 <body>
-
-<div id="stage">
-  <video id="video" autoplay muted playsinline></video>
-  <canvas id="overlay"></canvas>
-  <div id="status">모델 불러오는 중…</div>
-  <div id="lock"><div id="lockfill"></div></div>
-  <div id="sounds">
-    <button class="snd" data-f="squeak">삑삑이</button>
-    <button class="snd" data-f="meow">야옹</button>
-    <button class="snd" data-f="bird">새소리</button>
-    <button class="snd" data-f="bell">초인종</button>
-    <button class="snd" data-f="kiss">쪽쪽</button>
+<div id="app">
+  <div id="topbar">
+    <button id="petchip" onclick="openPets()">
+      <span class="avatar" id="petAvatar">🐾</span>
+      <span><span class="jua" id="petname">우리 아이</span><br><span id="petsub">등록해 주세요</span></span>
+    </button>
+    <span id="logo">🐾</span>
   </div>
-  <button id="shutter" aria-label="수동 촬영"></button>
-  <div id="loading">카메라와 AI 모델을 준비하고 있어요.<br>잠시만요…</div>
+
+  <div id="tabs">
+    <button class="tab on jua" id="tabCam" onclick="showTab('cam')">카메라</button>
+    <button class="tab jua" id="tabAlbum" onclick="showTab('album')">앨범</button>
+  </div>
+
+  <!-- CAMERA -->
+  <div id="camera">
+    <div id="stage">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+      <div id="status">준비 중…</div>
+      <div id="lockwrap"><div id="lockfill"></div></div>
+      <div id="loading"><div><div class="paw">🐾</div>카메라랑 AI 모델<br>준비하고 있어요…</div></div>
+    </div>
+
+    <div id="controls">
+      <div id="sounds"></div>
+      <div id="shutterrow">
+        <button id="gear" onclick="toggleAdv()">⚙</button>
+        <button id="shutter" onclick="manualShot()" aria-label="촬영">
+          <svg viewBox="0 0 24 24"><path d="M12 8.5c-2 0-3.5 1.5-3.5 3.5S10 15.5 12 15.5 15.5 14 15.5 12 14 8.5 12 8.5zm5.5-2.5a2 2 0 100-4 2 2 0 000 4zM4.5 6.5a2 2 0 100-4 2 2 0 000 4zM2 12a2 2 0 104 0 2 2 0 00-4 0zm18 0a2 2 0 104 0 2 2 0 00-4 0z"/></svg>
+        </button>
+        <span id="spacer"></span>
+      </div>
+
+      <div id="adv">
+        <h3>민감도</h3>
+        <p class="hint">자주 멋대로 찍히면 '엄격', 잘 안 찍히면 '쉽게'로 바꿔보세요.</p>
+        <div class="sens" id="sensRow">
+          <button data-s="high" onclick="setSens('high')">쉽게</button>
+          <button data-s="med" class="on" onclick="setSens('med')">보통</button>
+          <button data-s="low" onclick="setSens('low')">엄격</button>
+        </div>
+        <details class="raw">
+          <summary>고급 (개발용 미세조정)</summary>
+          <div class="row"><span style="min-width:80px">최소 크기</span><input id="minArea" type="range" min="2" max="40" value="10"><b id="minAreaV">10%</b></div>
+          <div class="row"><span style="min-width:80px">중앙 허용</span><input id="center" type="range" min="10" max="50" value="28"><b id="centerV">28%</b></div>
+          <div class="row"><span style="min-width:80px">안정 프레임</span><input id="streak" type="range" min="1" max="10" value="4"><b id="streakV">4</b></div>
+          <div class="row"><span style="min-width:80px">최소 신뢰도</span><input id="conf" type="range" min="30" max="90" value="55"><b id="confV">55%</b></div>
+          <p style="margin-top:8px">여기서 찾은 값을 iOS의 AutoShutterController에 그대로 넣으세요.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALBUM -->
+  <div id="album" style="display:none;"><div id="grid"></div><div id="empty" style="display:none;"><div class="big">🐾</div><p>아직 사진이 없어요<br>카메라로 첫 컷을 찍어보세요!</p></div></div>
 </div>
 
-<div id="panel">
-  <h2>임계값 튜닝 (실제 반려동물로 조정하세요)</h2>
-  <div class="row"><span style="min-width:96px">최소 크기</span>
-    <input id="minArea" type="range" min="2" max="40" value="10"><b id="minAreaV">10%</b></div>
-  <div class="row"><span style="min-width:96px">중앙 허용범위</span>
-    <input id="center" type="range" min="10" max="50" value="28"><b id="centerV">28%</b></div>
-  <div class="row"><span style="min-width:96px">안정 프레임</span>
-    <input id="streak" type="range" min="1" max="10" value="4"><b id="streakV">4</b></div>
-  <div class="row"><span style="min-width:96px">최소 신뢰도</span>
-    <input id="conf" type="range" min="30" max="90" value="55"><b id="confV">55%</b></div>
+<!-- Pet sheet -->
+<div class="sheet" id="petSheet"><div class="sheetbox">
+  <h2>우리 아이들</h2>
+  <div class="petlist" id="petList"></div>
+  <button class="addbtn" onclick="openAdd()">+ 새로운 아이 등록</button>
+</div></div>
 
-  <h2>잡은 컷 (연사 중 자동 선별)</h2>
-  <p class="hint">각 컷의 숫자는 선명도 점수(라플라시안 분산)예요. 높을수록 또렷합니다. 같은 연사에서 이 점수가 가장 높은 컷이 자동 선택됩니다.</p>
-  <div id="gallery"></div>
-</div>
+<!-- Add pet sheet -->
+<div class="sheet" id="addSheet"><div class="sheetbox">
+  <h2>반려동물 등록 🐾</h2>
+  <label class="fld">이름</label>
+  <input class="input" id="inName" placeholder="예: 초코" oninput="checkAdd()">
+  <label class="fld">종류</label>
+  <div class="seg" id="typeSeg">
+    <button data-t="dog" class="on" onclick="pick('type','dog')">강아지</button>
+    <button data-t="cat" onclick="pick('type','cat')">고양이</button>
+    <button data-t="other" onclick="pick('type','other')">기타</button>
+  </div>
+  <label class="fld">성별</label>
+  <div class="seg" id="sexSeg">
+    <button data-x="male" class="on" onclick="pick('sex','male')">남아</button>
+    <button data-x="female" onclick="pick('sex','female')">여아</button>
+  </div>
+  <div class="toggle"><span>생일을 알아요</span><div class="sw" id="bdaySw" onclick="toggleBday()"><i></i></div></div>
+  <input class="input" id="inBday" type="date" style="display:none;margin-top:10px;">
+  <button class="bigbtn" id="saveBtn" onclick="savePet()" disabled>저장</button>
+</div></div>
+
+<!-- Lightbox -->
+<div id="light"><img id="lightImg"><div class="acts">
+  <a id="lightDl" download="pet.jpg">저장</a>
+  <button onclick="deleteCurrent()">삭제</button>
+  <button onclick="closeLight()">닫기</button>
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script>
-const video = document.getElementById('video');
-const overlay = document.getElementById('overlay');
-const octx = overlay.getContext('2d');
-const statusEl = document.getElementById('status');
-const lockfill = document.getElementById('lockfill');
-const gallery = document.getElementById('gallery');
+/* ---------- persistence ---------- */
+let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('petcam',1);
+  r.onupgradeneeded=e=>{const d=e.target.result;
+    if(!d.objectStoreNames.contains('photos')){const s=d.createObjectStore('photos',{keyPath:'id'});s.createIndex('pet','petId');}
+    if(!d.objectStoreNames.contains('voices'))d.createObjectStore('voices',{keyPath:'id'});};
+  r.onsuccess=e=>{db=e.target.result;res();};r.onerror=()=>rej(r.error);});}
+const store=(n,m)=>db.transaction(n,m).objectStore(n);
+const idbPut=(n,v)=>new Promise((res,rej)=>{const r=store(n,'readwrite').put(v);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+const idbDel=(n,k)=>new Promise((res)=>{const r=store(n,'readwrite').delete(k);r.onsuccess=()=>res();});
+const idbAll=(n)=>new Promise((res)=>{const o=[];const r=store(n,'readonly').openCursor();r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});
+function photosFor(petId){return new Promise((res)=>{const o=[];const r=store('photos','readonly').index('pet').openCursor(IDBKeyRange.only(petId));
+  r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o.sort((a,b)=>b.ts-a.ts));};});}
 
-// Tunables bound to sliders
-const T = { minArea:0.10, center:0.28, streak:4, conf:0.55 };
-function bind(id, key, fmt, scale){ const el=document.getElementById(id), out=document.getElementById(id+'V');
-  el.oninput=()=>{ T[key]=el.value*scale; out.textContent=fmt(el.value); }; }
-bind('minArea','minArea',v=>v+'%',0.01);
-bind('center','center',v=>v+'%',0.01);
-bind('streak','streak',v=>v,1);
-bind('conf','conf',v=>v+'%',0.01);
+let pets=JSON.parse(localStorage.getItem('pets')||'[]');
+let activeId=localStorage.getItem('active')||null;
+const savePets=()=>{localStorage.setItem('pets',JSON.stringify(pets));localStorage.setItem('active',activeId||'');};
+const active=()=>pets.find(p=>p.id===activeId);
 
-// ---- Attention sounds (synthesized; real app ships recorded squeak/meow files) ----
-let actx;
-const sounds = {
-  squeak:[1500,2400,140], meow:[600,420,300], bird:[2600,3200,90], bell:[900,1400,200], kiss:[1800,1200,120]
-};
-function play(name){
-  actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-  const [f1,f2,ms]=sounds[name]; const o=actx.createOscillator(), g=actx.createGain();
-  o.frequency.setValueAtTime(f1,actx.currentTime);
-  o.frequency.linearRampToValueAtTime(f2,actx.currentTime+ms/1000);
-  g.gain.setValueAtTime(.22,actx.currentTime); g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+ms/1000);
-  o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+ms/1000);
-}
-document.querySelectorAll('.snd').forEach(b=>b.onclick=()=>play(b.dataset.f));
+/* ---------- thresholds ---------- */
+const T={minArea:.10,center:.28,streak:4,conf:.55};
+const SENS={high:{minArea:.06,center:.34,streak:3,conf:.45},med:{minArea:.10,center:.28,streak:4,conf:.55},low:{minArea:.16,center:.22,streak:6,conf:.65}};
+let sens=localStorage.getItem('sens')||'med';
+function applySens(s){sens=s;localStorage.setItem('sens',s);Object.assign(T,SENS[s]);
+  document.querySelectorAll('#sensRow button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  syncRaw();}
+function setSens(s){applySens(s);}
+function syncRaw(){minArea.value=Math.round(T.minArea*100);minAreaV.textContent=minArea.value+'%';
+  center.value=Math.round(T.center*100);centerV.textContent=center.value+'%';
+  streak.value=T.streak;streakV.textContent=T.streak;conf.value=Math.round(T.conf*100);confV.textContent=conf.value+'%';}
+function bindRaw(id,key,fmt,scale){const el=document.getElementById(id),o=document.getElementById(id+'V');
+  el.oninput=()=>{T[key]=el.value*scale;o.textContent=fmt(el.value);};}
+bindRaw('minArea','minArea',v=>v+'%',.01);bindRaw('center','center',v=>v+'%',.01);
+bindRaw('streak','streak',v=>v,1);bindRaw('conf','conf',v=>v+'%',.01);
+function toggleAdv(){adv.style.display=adv.style.display==='block'?'none':'block';}
 
-// ---- Camera ----
-async function startCamera(){
-  const tries=[{video:{facingMode:{ideal:'environment'}}},{video:true}];
-  for(const c of tries){ try{ const s=await navigator.mediaDevices.getUserMedia(c); video.srcObject=s; await video.play(); return true; }catch(e){} }
-  return false;
-}
+/* ---------- sounds ---------- */
+let actx;const SYN={squeak:[1500,2400,140,'삑삑이'],meow:[600,420,300,'야옹'],bird:[2600,3200,90,'새소리'],bell:[900,1400,200,'초인종'],kiss:[1800,1200,120,'쪽쪽']};
+function playSyn(name){actx=actx||new(window.AudioContext||window.webkitAudioContext)();
+  const[f1,f2,ms]=SYN[name];const o=actx.createOscillator(),g=actx.createGain();
+  o.frequency.setValueAtTime(f1,actx.currentTime);o.frequency.linearRampToValueAtTime(f2,actx.currentTime+ms/1000);
+  g.gain.setValueAtTime(.22,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+ms/1000);
+  o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+ms/1000);}
+async function renderSounds(){const row=document.getElementById('sounds');row.innerHTML='';
+  Object.keys(SYN).forEach(k=>{const b=document.createElement('button');b.className='snd';b.textContent=SYN[k][3];
+    b.onclick=()=>playSyn(k);row.appendChild(b);});
+  const voices=await idbAll('voices');
+  voices.forEach(v=>{const b=document.createElement('button');b.className='snd';b.textContent='🎵 '+v.name;
+    b.onclick=()=>new Audio(v.dataUrl).play();row.appendChild(b);});
+  const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';
+  rec.onclick=recordVoice;row.appendChild(rec);}
+async function recordVoice(){const btn=document.getElementById('recBtn');
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});
+    const rec=new MediaRecorder(s);const chunks=[];rec.ondataavailable=e=>chunks.push(e.data);
+    rec.onstop=async()=>{s.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(chunks,{type:rec.mimeType});const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});
+      const n=(await idbAll('voices')).length+1;await idbPut('voices',{id:'v'+Date.now(),name:'목소리'+n,dataUrl:url});renderSounds();};
+    btn.classList.add('recording');btn.textContent='🔴 녹음 중…';rec.start();
+    setTimeout(()=>{if(rec.state!=='inactive')rec.stop();},3000);}
+  catch(e){alert('마이크 권한이 필요해요.');}}
 
-// ---- Sharpness: variance of Laplacian on a small grayscale copy ----
-const sc=document.createElement('canvas'); sc.width=sc.height=160; const sctx=sc.getContext('2d',{willReadFrequently:true});
-function sharpness(srcCanvas){
-  sctx.drawImage(srcCanvas,0,0,160,160);
-  const d=sctx.getImageData(0,0,160,160).data; const g=new Float32Array(160*160);
-  for(let i=0;i<160*160;i++){ g[i]=0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]; }
-  let sum=0,sq=0,n=0;
-  for(let y=1;y<159;y++) for(let x=1;x<159;x++){ const i=y*160+x;
-    const lap=4*g[i]-g[i-1]-g[i+1]-g[i-160]-g[i+160]; sum+=lap; sq+=lap*lap; n++; }
-  const m=sum/n; return Math.round(sq/n-m*m);
-}
-function grabFrame(){ const c=document.createElement('canvas'); c.width=video.videoWidth; c.height=video.videoHeight;
-  c.getContext('2d').drawImage(video,0,0); return c; }
+/* ---------- camera ---------- */
+const video=document.getElementById('video'),overlay=document.getElementById('overlay'),octx=overlay.getContext('2d');
+const statusEl=document.getElementById('status'),lockfill=document.getElementById('lockfill');
+async function startCamera(){for(const c of[{video:{facingMode:{ideal:'environment'}}},{video:true}]){
+  try{const s=await navigator.mediaDevices.getUserMedia(c);video.srcObject=s;await video.play();return true;}catch(e){}}return false;}
 
-// ---- Auto-shutter state machine ----
-let model, state='search', goodStreak=0, burst=[], lastShot=0;
-const BURST=6, COOLDOWN=2000;
+/* sharpness + motion */
+const sc=document.createElement('canvas');sc.width=sc.height=160;const sctx=sc.getContext('2d',{willReadFrequently:true});
+function sharpness(cv){sctx.drawImage(cv,0,0,160,160);const d=sctx.getImageData(0,0,160,160).data;const g=new Float32Array(160*160);
+  for(let i=0;i<160*160;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  let s=0,sq=0,n=0;for(let y=1;y<159;y++)for(let x=1;x<159;x++){const i=y*160+x;
+    const l=4*g[i]-g[i-1]-g[i+1]-g[i-160]-g[i+160];s+=l;sq+=l*l;n++;}const m=s/n;return Math.round(sq/n-m*m);}
+const mc=document.createElement('canvas');mc.width=mc.height=64;const mctx=mc.getContext('2d',{willReadFrequently:true});
+let prevGray=null;
+function motion(){mctx.drawImage(video,0,0,64,64);const d=mctx.getImageData(0,0,64,64).data;const g=new Float32Array(64*64);
+  for(let i=0;i<64*64;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  if(!prevGray){prevGray=g;return 999;}let diff=0;for(let i=0;i<g.length;i++)diff+=Math.abs(g[i]-prevGray[i]);prevGray=g;return diff/g.length;}
+function grab(){const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);return c;}
+function compress(cv,max=1080,q=.82){const s=Math.min(1,max/Math.max(cv.width,cv.height));const w=Math.round(cv.width*s),h=Math.round(cv.height*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(cv,0,0,w,h);return c.toDataURL('image/jpeg',q);}
 
-function goodPet(preds){
-  const fw=video.videoWidth, fh=video.videoHeight;
-  let best=null, bestArea=0;
-  for(const p of preds){
-    if(p.class!=='dog'&&p.class!=='cat') continue;
-    if(p.score<T.conf) continue;
-    const [x,y,w,h]=p.bbox; const area=(w*h)/(fw*fh);
-    if(area<T.minArea) continue;
-    const cx=(x+w/2)/fw-0.5, cy=(y+h/2)/fh-0.5;
-    if(Math.hypot(cx,cy)>T.center) continue;
-    if(area>bestArea){ bestArea=area; best=p; }
-  }
-  return best;
-}
-
-function draw(preds, locked){
-  overlay.width=video.videoWidth; overlay.height=video.videoHeight;
-  octx.clearRect(0,0,overlay.width,overlay.height);
-  for(const p of preds){
-    if(p.class!=='dog'&&p.class!=='cat') continue;
-    const [x,y,w,h]=p.bbox;
-    octx.strokeStyle = (locked&&locked===p)?'#34d27b':'rgba(255,255,255,.5)';
-    octx.lineWidth=3; octx.strokeRect(x,y,w,h);
-  }
-}
-
-function setStatus(t){ statusEl.textContent=t; }
+/* ---------- auto-shutter ---------- */
+const SPECIES=['dog','cat','bird'];
+let model,state='search',streakN=0,burst=[],lastShot=0;const BURST=6,COOLDOWN=2000;
+function goodPet(preds){const fw=video.videoWidth,fh=video.videoHeight;let best=null,ba=0;
+  for(const p of preds){if(!SPECIES.includes(p.class)||p.score<T.conf)continue;
+    const[x,y,w,h]=p.bbox,area=(w*h)/(fw*fh);if(area<T.minArea)continue;
+    const cx=(x+w/2)/fw-.5,cy=(y+h/2)/fh-.5;if(Math.hypot(cx,cy)>T.center)continue;
+    if(area>ba){ba=area;best=p;}}return best;}
+function drawBoxes(preds,locked){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);
+  for(const p of preds){if(!SPECIES.includes(p.class))continue;const[x,y,w,h]=p.bbox;
+    octx.strokeStyle=(locked===p)?'#5FC9A6':'rgba(255,255,255,.55)';octx.lineWidth=4;
+    octx.beginPath();octx.roundRect(x,y,w,h,16);octx.stroke();}}
+function setStatus(t){statusEl.textContent=t;}
+function clearOverlay(){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);}
 
 async function loop(){
-  if(model && video.readyState>=2){
-    const preds = await model.detect(video);
-    if(state==='cooldown'){ if(Date.now()-lastShot>COOLDOWN) state='search'; }
-    else if(state==='capturing'){
-      burst.push(grabFrame());
-      if(burst.length>=BURST) finishBurst();
-    } else {
-      const pet = goodPet(preds);
-      if(pet){ goodStreak++; setStatus('쳐다보는 중…');
-        lockfill.style.width = Math.min(100, goodStreak/T.streak*100)+'%';
-        if(goodStreak>=T.streak){ state='capturing'; burst=[grabFrame()]; setStatus('찰칵! 연사 중'); }
-      } else { goodStreak=0; lockfill.style.width='0%'; setStatus('반려동물을 찾는 중…'); }
-      draw(preds, pet);
+  if(model&&video.readyState>=2&&!petSheetOpen()){
+    if(state==='cooldown'){if(Date.now()-lastShot>COOLDOWN){state='search';setStatus('우리 아이 찾는 중…');}}
+    else if(state==='capturing'){burst.push(grab());if(burst.length>=BURST)finishBurst();}
+    else{
+      const isOther=active()&&active().type==='other';
+      if(isOther){const mv=motion();const thr=sens==='high'?9:sens==='low'?4:6;
+        if(mv<thr){streakN++;setStatus('가만히… 찰칵 준비!');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
+          if(streakN>=T.streak){state='capturing';burst=[grab()];setStatus('찰칵! 연사 중');}}
+        else{streakN=0;lockfill.style.width='0';setStatus('우리 아이를 비춰주세요');}
+        clearOverlay();}
+      else{const preds=await model.detect(video);const pet=goodPet(preds);
+        if(pet){streakN++;setStatus('쳐다보는 중…');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
+          if(streakN>=T.streak){state='capturing';burst=[grab()];setStatus('찰칵! 연사 중');}}
+        else{streakN=0;lockfill.style.width='0';setStatus('우리 아이 찾는 중…');}
+        drawBoxes(preds,pet);}
     }
-    if(state==='capturing'||state==='cooldown') draw(preds, null);
   }
   requestAnimationFrame(loop);
 }
+function finishBurst(){const frames=burst;burst=[];lastShot=Date.now();streakN=0;state='cooldown';lockfill.style.width='0';setStatus('베스트 컷 고르는 중…');
+  let best=null,bs=-1;for(const f of frames){const s=sharpness(f);if(s>bs){bs=s;best=f;}}if(best)saveShot(best);}
+function manualShot(){const f=grab();saveShot(f);}
+async function saveShot(cv){const dataUrl=compress(cv);const pet=active();if(!pet){openAdd();return;}
+  await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl,ts:Date.now()});
+  setStatus('앨범에 저장됐어요!');setTimeout(()=>{if(state!=='capturing')setStatus('우리 아이 찾는 중…');},1200);
+  if(curTab==='album')renderAlbum();}
 
-function finishBurst(){
-  const frames=burst; burst=[]; lastShot=Date.now(); goodStreak=0; state='cooldown';
-  lockfill.style.width='0%'; setStatus('베스트 컷 고르는 중…');
-  let best=null, bestScore=-1;
-  for(const f of frames){ const s=sharpness(f); if(s>bestScore){ bestScore=s; best=f; } }
-  if(best) addToGallery(best, bestScore);
-  setTimeout(()=>{ if(state==='cooldown'&&Date.now()-lastShot>COOLDOWN) setStatus('반려동물을 찾는 중…'); }, COOLDOWN);
-}
+/* ---------- views ---------- */
+let curTab='cam';
+function showTab(t){curTab=t;document.getElementById('camera').style.display=t==='cam'?'block':'none';
+  document.getElementById('album').style.display=t==='album'?'block':'none';
+  tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');if(t==='album')renderAlbum();}
+async function renderAlbum(){const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
+  if(!pet){grid.innerHTML='';empty.style.display='block';return;}
+  const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
+  ph.forEach(p=>{const img=document.createElement('img');img.src=p.dataUrl;img.onclick=()=>openLight(p);grid.appendChild(img);});}
 
-document.getElementById('shutter').onclick=()=>{ const f=grabFrame(); addToGallery(f, sharpness(f)); };
+/* lightbox */
+let curPhoto=null;
+function openLight(p){curPhoto=p;lightImg.src=p.dataUrl;lightDl.href=p.dataUrl;document.getElementById('light').classList.add('on');}
+function closeLight(){document.getElementById('light').classList.remove('on');}
+async function deleteCurrent(){if(curPhoto){await idbDel('photos',curPhoto.id);closeLight();renderAlbum();}}
 
-function addToGallery(canvas, score){
-  const url=canvas.toDataURL('image/jpeg',0.9);
-  const fig=document.createElement('figure');
-  fig.innerHTML=`<img src="${url}"><span class="score">${score}</span>`+
-    `<a href="${url}" download="pet_${Date.now()}.jpg">저장</a>`;
-  gallery.prepend(fig);
-}
+/* pet header + sheets */
+const AV={dog:'🐶',cat:'🐱',other:'🐾'};
+function refreshHeader(){const p=active();
+  if(p){document.getElementById('petname').textContent=p.name;
+    document.getElementById('petsub').textContent=`${p.type==='dog'?'강아지':p.type==='cat'?'고양이':'기타'} · ${ageText(p)}`;
+    document.getElementById('petAvatar').textContent=AV[p.type];}
+  else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';}}
+function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=new Date(p.birthMs);
+  let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();if(m<0){y--;m+=12;}
+  return y<=0?`${Math.max(m,0)}개월`:m===0?`${y}살`:`${y}살 ${m}개월`;}
+function petSheetOpen(){return document.getElementById('petSheet').classList.contains('on')||document.getElementById('addSheet').classList.contains('on');}
+function openPets(){const list=document.getElementById('petList');list.innerHTML='';
+  pets.forEach(p=>{const r=document.createElement('div');r.className='petrow'+(p.id===activeId?' on':'');
+    r.innerHTML=`<span class="avatar">${AV[p.type]}</span><div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${ageText(p)}</div></div>${p.id===activeId?'<span style="color:var(--coral)">✓</span>':''}`;
+    r.onclick=()=>{activeId=p.id;savePets();refreshHeader();closeSheets();};list.appendChild(r);});
+  document.getElementById('petSheet').classList.add('on');}
+function closeSheets(){document.getElementById('petSheet').classList.remove('on');document.getElementById('addSheet').classList.remove('on');}
+document.querySelectorAll('.sheet').forEach(s=>s.onclick=e=>{if(e.target===s)closeSheets();});
 
-(async function init(){
-  const camOk=await startCamera();
-  if(!camOk){ document.getElementById('loading').innerHTML='카메라 권한이 필요합니다.<br>HTTPS 또는 localhost에서 열어주세요.'; return; }
-  try{ model=await cocoSsd.load({base:'lite_mobilenet_v2'}); }
-  catch(e){ document.getElementById('loading').innerHTML='AI 모델 로드 실패.<br>인터넷 연결을 확인해 주세요.'; return; }
-  document.getElementById('loading').style.display='none';
-  setStatus('반려동물을 찾는 중…');
-  loop();
+/* add pet */
+let draft={type:'dog',sex:'male',bday:false};
+function openAdd(){draft={type:'dog',sex:'male',bday:false};document.getElementById('inName').value='';
+  document.querySelectorAll('#typeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='dog'));
+  document.querySelectorAll('#sexSeg button').forEach(b=>b.classList.toggle('on',b.dataset.x==='male'));
+  document.getElementById('bdaySw').classList.remove('on');document.getElementById('inBday').style.display='none';
+  document.getElementById('saveBtn').disabled=true;
+  document.getElementById('petSheet').classList.remove('on');document.getElementById('addSheet').classList.add('on');}
+function pick(kind,val){draft[kind]=val;const seg=kind==='type'?'#typeSeg':'#sexSeg',attr=kind==='type'?'t':'x';
+  document.querySelectorAll(seg+' button').forEach(b=>b.classList.toggle('on',b.dataset[attr]===val));}
+function toggleBday(){draft.bday=!draft.bday;document.getElementById('bdaySw').classList.toggle('on',draft.bday);
+  document.getElementById('inBday').style.display=draft.bday?'block':'none';}
+function checkAdd(){document.getElementById('saveBtn').disabled=!document.getElementById('inName').value.trim();}
+function savePet(){const name=document.getElementById('inName').value.trim();if(!name)return;
+  const bday=draft.bday?new Date(document.getElementById('inBday').value).getTime():null;
+  const pet={id:'pet'+Date.now(),name,type:draft.type,sex:draft.sex,birthMs:isNaN(bday)?null:bday};
+  pets.push(pet);activeId=pet.id;savePets();refreshHeader();closeSheets();prevGray=null;}
+
+/* ---------- init ---------- */
+(async function(){
+  await openDB();applySens(sens);await renderSounds();refreshHeader();
+  if(pets.length===0)openAdd();
+  const ok=await startCamera();
+  if(!ok){document.getElementById('loading').innerHTML='카메라 권한이 필요해요.<br>HTTPS나 localhost에서 열어주세요.';return;}
+  try{model=await cocoSsd.load({base:'lite_mobilenet_v2'});}
+  catch(e){document.getElementById('loading').innerHTML='AI 모델을 못 불러왔어요.<br>인터넷 연결을 확인해 주세요.';return;}
+  document.getElementById('loading').style.display='none';setStatus('우리 아이 찾는 중…');loop();
 })();
 </script>
 </body>
