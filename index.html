@@ -8,81 +8,59 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --cream:#FFF6EF; --card:#FFFFFF; --coral:#FF7E67; --coral-d:#E8543B;
-    --mint:#5FC9A6; --yellow:#FFC861; --ink:#5A463B; --muted:#AC9A8E; --line:#F1E4D9;
-    --shadow:0 6px 20px rgba(120,80,50,.10);
-  }
+  :root{--cream:#FFF6EF;--card:#FFFFFF;--coral:#FF7E67;--mint:#5FC9A6;--yellow:#FFC861;
+    --ink:#5A463B;--muted:#AC9A8E;--line:#F1E4D9;--shadow:0 6px 20px rgba(120,80,50,.10);}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;background:var(--cream);color:var(--ink);
-       font-family:"Noto Sans KR",-apple-system,sans-serif;}
-  .jua{font-family:"Jua",sans-serif;font-weight:400;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:"Noto Sans KR",-apple-system,sans-serif;}
+  .jua{font-family:"Jua",sans-serif;}
   #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
-
-  /* Header */
   #topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 6px;}
-  #petchip{display:flex;align-items:center;gap:10px;background:var(--card);border:none;
-           border-radius:999px;padding:6px 14px 6px 6px;box-shadow:var(--shadow);cursor:pointer;}
-  .avatar{width:38px;height:38px;border-radius:50%;background:var(--yellow);
+  #petchip{display:flex;align-items:center;gap:10px;background:var(--card);border:none;border-radius:999px;
+           padding:6px 14px 6px 6px;box-shadow:var(--shadow);}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--yellow);background-size:cover;background-position:center;
           display:flex;align-items:center;justify-content:center;font-size:20px;}
   #petname{font-size:16px;}#petsub{font-size:11px;color:var(--muted);}
-  #logo{margin-left:auto;font-size:22px;color:var(--coral);}
-
-  /* Tabs */
+  #logo{margin-left:auto;font-size:22px;}
   #tabs{display:flex;gap:6px;background:#F4E7DC;border-radius:999px;padding:4px;margin:8px 16px;}
-  .tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;
-       font-size:15px;color:var(--muted);font-family:"Jua";}
+  .tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;font-size:15px;color:var(--muted);font-family:"Jua";}
   .tab.on{background:var(--card);color:var(--coral);box-shadow:0 2px 8px rgba(120,80,50,.12);}
-
-  /* Camera */
-  #stage{position:relative;margin:8px 16px;border-radius:26px;overflow:hidden;
-         background:#241c17;aspect-ratio:3/4;box-shadow:var(--shadow);}
+  #bdayBanner{margin:2px 16px 0;background:var(--yellow);color:#7a5b14;border-radius:16px;padding:12px 16px;
+              font-family:"Jua";font-size:14px;text-align:center;box-shadow:var(--shadow);}
+  #stage{position:relative;margin:8px 16px;border-radius:26px;overflow:hidden;background:#241c17;aspect-ratio:3/4;box-shadow:var(--shadow);}
   video,#overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  #status{position:absolute;top:14px;left:50%;transform:translateX(-50%);
-          background:rgba(255,255,255,.92);color:var(--ink);padding:8px 16px;border-radius:999px;
-          font-family:"Jua";font-size:15px;white-space:nowrap;box-shadow:var(--shadow);}
-  #lockwrap{position:absolute;top:52px;left:50%;transform:translateX(-50%);
-            width:130px;height:6px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;}
+  #status{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);color:var(--ink);
+          padding:8px 16px;border-radius:999px;font-family:"Jua";font-size:15px;white-space:nowrap;box-shadow:var(--shadow);}
+  #lockwrap{position:absolute;top:52px;left:50%;transform:translateX(-50%);width:130px;height:6px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;}
   #lockfill{height:100%;width:0;background:var(--mint);border-radius:3px;transition:width .12s;}
-
-  /* Controls below cam */
   #controls{padding:4px 16px 18px;}
+  #autoRow{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;
+           padding:11px 16px;box-shadow:var(--shadow);margin-bottom:12px;}
+  #autoRow .lab{font-family:"Jua";font-size:15px;}#autoRow .sub{font-size:11px;color:var(--muted);}
+  .sw{width:50px;height:28px;border-radius:999px;background:#E2D3C6;position:relative;transition:.2s;flex:0 0 auto;}
+  .sw.on{background:var(--mint);}
+  .sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;}
+  .sw.on i{left:25px;}
   #sounds{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;}
   #sounds::-webkit-scrollbar{display:none;}
-  .snd{flex:0 0 auto;background:var(--card);border:2px solid var(--line);color:var(--ink);
-       padding:9px 15px;border-radius:999px;font-size:14px;font-family:"Jua";box-shadow:var(--shadow);}
-  .snd:active{background:var(--coral);color:#fff;border-color:var(--coral);transform:scale(.95);}
+  .snd{flex:0 0 auto;background:var(--card);border:2px solid var(--line);color:var(--ink);padding:9px 15px;
+       border-radius:999px;font-size:14px;font-family:"Jua";box-shadow:var(--shadow);}
+  .snd:active{transform:scale(.95);}
   .snd.rec{color:var(--coral);border-color:var(--coral);}
   .snd.sel{background:var(--mint);color:#fff;border-color:var(--mint);}
   .snd.recording{background:var(--coral);color:#fff;animation:pulse .8s infinite;}
   @keyframes pulse{50%{opacity:.6;}}
-
+  .snd.voicechip{display:inline-flex;align-items:center;gap:8px;}
+  .vdel{font-size:11px;width:18px;height:18px;border-radius:50%;background:rgba(90,70,59,.12);display:inline-flex;align-items:center;justify-content:center;}
   #shutterrow{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:14px;}
-  #gear{width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--card);
-        font-size:20px;color:var(--muted);box-shadow:var(--shadow);}
-  #shutter{width:78px;height:78px;border-radius:50%;border:6px solid #fff;background:var(--coral);
-           box-shadow:0 6px 18px rgba(232,84,59,.4);display:flex;align-items:center;justify-content:center;}
-  #shutter:active{transform:scale(.92);}
-  #shutter svg{width:38px;height:38px;fill:#fff;}
-  #spacer{width:46px;}
-
-  /* Advanced drawer */
-  #adv{margin:0 16px 16px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);
-       padding:16px;display:none;}
-  #adv h3{font-family:"Jua";font-size:15px;margin:0 0 4px;}
-  #adv .hint{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
-  .sens{display:flex;gap:8px;margin-bottom:14px;}
-  .sens button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 0;
-               font-family:"Jua";font-size:14px;color:var(--muted);}
+  #gear{width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--card);font-size:20px;color:var(--muted);box-shadow:var(--shadow);}
+  #shutter{width:78px;height:78px;border-radius:50%;border:6px solid #fff;background:var(--coral);box-shadow:0 6px 18px rgba(232,84,59,.4);display:flex;align-items:center;justify-content:center;}
+  #shutter:active{transform:scale(.92);}#shutter svg{width:38px;height:38px;fill:#fff;}#spacer{width:46px;}
+  #adv{margin:14px 0 0;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px;display:none;}
+  #adv h3{font-family:"Jua";font-size:15px;margin:0 0 4px;}#adv .hint{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
+  .sens{display:flex;gap:8px;}
+  .sens button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 0;font-family:"Jua";font-size:14px;color:var(--muted);}
   .sens button.on{border-color:var(--coral);color:var(--coral);background:#FFF1ED;}
-  .raw{font-size:11px;color:var(--muted);}
-  .raw summary{cursor:pointer;margin-bottom:8px;}
-  .row{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:12px;}
-  .row input[type=range]{flex:1;accent-color:var(--coral);}
-  .row b{min-width:40px;text-align:right;color:var(--ink);}
-
-  /* Album */
-  #album{padding:8px 16px 24px;}
+  #album,#create{padding:8px 16px 24px;}
   #petStrip{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scrollbar-width:none;}
   #petStrip::-webkit-scrollbar{display:none;}
   .petface{flex:0 0 auto;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;}
@@ -94,100 +72,58 @@
   .petface.add .fc{background:#FFF1ED;color:var(--coral);border:2px dashed var(--coral);font-size:28px;}
   #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
   #grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);}
-  #empty{text-align:center;color:var(--muted);padding:60px 20px;}
-  #empty .big{font-size:48px;}#empty p{font-family:"Jua";font-size:16px;margin:10px 0 0;}
-  .snd.voicechip{display:inline-flex;align-items:center;gap:8px;}
-  .vdel{font-size:11px;width:18px;height:18px;border-radius:50%;background:rgba(90,70,59,.12);
-        display:inline-flex;align-items:center;justify-content:center;}
-
-  /* Sheets / modal */
-  .sheet{position:fixed;inset:0;background:rgba(60,40,30,.45);display:none;
-         align-items:flex-end;justify-content:center;z-index:30;}
+  #empty{text-align:center;color:var(--muted);padding:60px 20px;}#empty .big{font-size:48px;}#empty p{font-family:"Jua";font-size:16px;margin:10px 0 0;}
+  .crcard{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--line);border-radius:20px;
+          padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);width:100%;text-align:left;}
+  .crcard:active{transform:scale(.98);border-color:var(--coral);}
+  .crcard .emoji{font-size:32px;}.crcard .ct{font-family:"Jua";font-size:17px;color:var(--ink);}.crcard .cd{font-size:12px;color:var(--muted);}
+  .crhint{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+  /* modals */
+  #light,#result,#player{position:fixed;inset:0;background:rgba(30,20,15,.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:45;padding:20px;}
+  #light.on,#result.on,#player.on{display:flex;}
+  #light img,#result img,#player canvas{max-width:100%;max-height:60vh;border-radius:18px;}
+  #fxRow,#resStyles{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center;}
+  .fx,#resStyles button{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:8px 14px;font-family:"Jua";font-size:14px;}
+  .fx.on{background:var(--yellow);border-color:var(--yellow);color:var(--ink);}
+  #light .acts,#result .acts,#player .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+  #light a,#light button,#result a,#result button,#player button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
+  #recHint{color:var(--yellow);font-size:13px;margin-top:10px;min-height:18px;font-family:"Jua";}
+  #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
+  #picker.on{display:flex;}
+  .pkbox{background:var(--cream);width:100%;max-width:460px;max-height:84vh;border-radius:24px;display:flex;flex-direction:column;padding:18px;box-shadow:var(--shadow);}
+  .pkbox h2{font-family:"Jua";font-size:18px;text-align:center;margin:2px 0 12px;}
+  #pkGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;flex:1;}
+  #pkGrid .cell{position:relative;aspect-ratio:1;}#pkGrid img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block;}
+  #pkGrid .cell.sel img{outline:3px solid var(--coral);outline-offset:-3px;}
+  .pkbadge{position:absolute;top:5px;left:5px;background:var(--coral);color:#fff;font-family:"Jua";font-size:12px;min-width:22px;text-align:center;padding:2px 7px;border-radius:999px;}
+  .pkbox .acts{display:flex;gap:10px;margin-top:12px;}
+  .pkbox .acts button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;font-family:"Jua";font-size:15px;color:var(--ink);}
+  #pkMake{background:var(--coral)!important;color:#fff!important;border-color:var(--coral)!important;}
+  #pkMake:disabled{background:#E7CFC6!important;border-color:#E7CFC6!important;}
+  /* sheets */
+  .sheet{position:fixed;inset:0;background:rgba(60,40,30,.45);display:none;align-items:flex-end;justify-content:center;z-index:30;}
   .sheet.on{display:flex;}
-  .sheetbox{background:var(--cream);width:100%;max-width:480px;border-radius:26px 26px 0 0;
+  .sheetbox{background:var(--cream);width:100%;max-width:480px;max-height:88vh;overflow-y:auto;border-radius:26px 26px 0 0;
             padding:22px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.2);}
   .sheetbox h2{font-family:"Jua";font-size:20px;margin:0 0 16px;text-align:center;}
   label.fld{display:block;font-size:12px;color:var(--muted);margin:14px 0 5px;}
-  .input{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;
-         font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
+  .input{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
   .seg{display:flex;gap:8px;}
-  .seg button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:11px 0;
-              font-family:"Jua";font-size:15px;color:var(--muted);}
+  .seg.wrap{flex-wrap:wrap;}.seg.wrap button{flex:0 0 auto;}
+  .seg button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:11px 14px;font-family:"Jua";font-size:15px;color:var(--muted);}
   .seg button.on{border-color:var(--coral);color:var(--coral);background:#FFF1ED;}
   .toggle{display:flex;align-items:center;justify-content:space-between;margin:16px 0 0;font-size:15px;}
-  .sw{width:48px;height:28px;border-radius:999px;background:#E2D3C6;position:relative;transition:.2s;}
-  .sw.on{background:var(--mint);}
-  .sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;}
-  .sw.on i{left:23px;}
-  .bigbtn{width:100%;margin-top:22px;border:none;background:var(--coral);color:#fff;
-          border-radius:16px;padding:15px;font-family:"Jua";font-size:17px;box-shadow:var(--shadow);}
+  .bigbtn{width:100%;margin-top:22px;border:none;background:var(--coral);color:#fff;border-radius:16px;padding:15px;font-family:"Jua";font-size:17px;box-shadow:var(--shadow);}
   .bigbtn:disabled{background:#E7CFC6;}
   .petlist{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
-  .petrow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);
-          border-radius:16px;padding:10px 14px;}
-  .petrow.on{border-color:var(--coral);}
-  .petrow .nm{font-family:"Jua";font-size:16px;}.petrow .sb{font-size:11px;color:var(--muted);}
-  .addbtn{width:100%;border:2px dashed var(--coral);color:var(--coral);background:#FFF7F4;
-          border-radius:16px;padding:13px;font-family:"Jua";font-size:15px;}
-
-  /* Lightbox */
-  #light{position:fixed;inset:0;background:rgba(30,20,15,.92);display:none;flex-direction:column;
-         align-items:center;justify-content:center;z-index:40;padding:20px;}
-  #light.on{display:flex;}
-  #light img{max-width:100%;max-height:64vh;border-radius:18px;}
-  #fxRow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center;}
-  .fx{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;
-      padding:8px 15px;font-family:"Jua";font-size:14px;}
-  .fx.on{background:var(--yellow);border-color:var(--yellow);color:var(--ink);}
-  #light .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
-  #light a,#light button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
-         padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
-
-  /* Create */
-  #create{padding:14px 16px 28px;}
-  .crcard{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--line);
-          border-radius:20px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);width:100%;text-align:left;}
-  .crcard:active{transform:scale(.98);border-color:var(--coral);}
-  .crcard .emoji{font-size:32px;}
-  .crcard .ct{font-family:"Jua";font-size:17px;color:var(--ink);}
-  .crcard .cd{font-size:12px;color:var(--muted);}
-  .crhint{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
-  #result,#player{position:fixed;inset:0;background:rgba(30,20,15,.93);display:none;flex-direction:column;
-          align-items:center;justify-content:center;z-index:45;padding:20px;}
-  #result.on,#player.on{display:flex;}
-  #result img,#player canvas{max-width:100%;max-height:64vh;border-radius:18px;}
-  #result .acts,#player .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
-  #result a,#result button,#player button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
-          padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
-  #recHint{color:var(--yellow);font-size:13px;margin-top:10px;min-height:18px;font-family:"Jua";}
-  #bdayBanner{margin:2px 16px 0;background:var(--yellow);color:#7a5b14;border-radius:16px;padding:12px 16px;
-              font-family:"Jua";font-size:14px;text-align:center;box-shadow:var(--shadow);}
-  #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:rgba(40,28,22,.92);
-         color:#fff;padding:11px 20px;border-radius:999px;font-family:"Jua";font-size:14px;opacity:0;pointer-events:none;
-         transition:.25s;z-index:60;}
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
-  #picker.on{display:flex;}
-  .pkbox{background:var(--cream);width:100%;max-width:460px;max-height:84vh;border-radius:24px;display:flex;
-         flex-direction:column;padding:18px;box-shadow:var(--shadow);}
-  .pkbox h2{font-family:"Jua";font-size:18px;text-align:center;margin:2px 0 12px;}
-  #pkGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;flex:1;}
-  #pkGrid .cell{position:relative;aspect-ratio:1;}
-  #pkGrid img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block;}
-  #pkGrid .cell.sel img{outline:3px solid var(--coral);outline-offset:-3px;}
-  .pkbadge{position:absolute;top:5px;left:5px;background:var(--coral);color:#fff;font-family:"Jua";
-           font-size:11px;padding:2px 9px;border-radius:999px;}
-  .pkbox .acts{display:flex;gap:10px;margin-top:12px;}
-  .pkbox .acts button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;
-                      font-family:"Jua";font-size:15px;color:var(--ink);}
-  #pkMake{background:var(--coral)!important;color:#fff!important;border-color:var(--coral)!important;}
-  #pkMake:disabled{background:#E7CFC6!important;border-color:#E7CFC6!important;}
+  .petrow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px 14px;}
+  .petrow.on{border-color:var(--coral);}.petrow .nm{font-family:"Jua";font-size:16px;}.petrow .sb{font-size:11px;color:var(--muted);}
   .petdel{font-size:18px;padding:2px 4px;opacity:.65;}
-  .avatar{background-size:cover;background-position:center;}
-
-  #loading{position:absolute;inset:0;background:#241c17;color:#fff;display:flex;
-           align-items:center;justify-content:center;text-align:center;padding:24px;
-           font-family:"Jua";font-size:16px;line-height:1.7;border-radius:26px;}
+  .addbtn{width:100%;border:2px dashed var(--coral);color:var(--coral);background:#FFF7F4;border-radius:16px;padding:13px;font-family:"Jua";font-size:15px;}
+  #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:rgba(40,28,22,.92);color:#fff;
+         padding:11px 20px;border-radius:999px;font-family:"Jua";font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #loading{position:absolute;inset:0;background:#241c17;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:"Jua";font-size:16px;line-height:1.7;border-radius:26px;}
   .paw{font-size:30px;}
 </style>
 </head>
@@ -200,7 +136,6 @@
     </button>
     <span id="logo">🐾</span>
   </div>
-
   <div id="tabs">
     <button class="tab on jua" id="tabCam" onclick="showTab('cam')">카메라</button>
     <button class="tab jua" id="tabAlbum" onclick="showTab('album')">앨범</button>
@@ -208,7 +143,6 @@
   </div>
   <div id="bdayBanner" onclick="makeBirthday()" style="display:none;"></div>
 
-  <!-- CAMERA -->
   <div id="camera">
     <div id="stage">
       <video id="video" autoplay muted playsinline></video>
@@ -217,8 +151,11 @@
       <div id="lockwrap"><div id="lockfill"></div></div>
       <div id="loading"><div><div class="paw">🐾</div>카메라랑 AI 모델<br>준비하고 있어요…</div></div>
     </div>
-
     <div id="controls">
+      <div id="autoRow">
+        <span><span class="lab" id="autoLabel">자동 촬영 꺼짐</span><br><span class="sub">켜면 쳐다볼 때 알아서 찍어요</span></span>
+        <div class="sw" id="autoSw" onclick="toggleAuto()"><i></i></div>
+      </div>
       <div id="sounds"></div>
       <div id="shutterrow">
         <button id="gear" onclick="toggleAdv()">⚙</button>
@@ -227,40 +164,30 @@
         </button>
         <span id="spacer"></span>
       </div>
-
       <div id="adv">
         <h3>민감도</h3>
-        <p class="hint">자주 멋대로 찍히면 '엄격', 잘 안 찍히면 '쉽게'로 바꿔보세요.</p>
+        <p class="hint">자주 멋대로 찍히면 '엄격', 잘 안 찍히면 '쉽게'로.</p>
         <div class="sens" id="sensRow">
           <button data-s="high" onclick="setSens('high')">쉽게</button>
           <button data-s="med" class="on" onclick="setSens('med')">보통</button>
           <button data-s="low" onclick="setSens('low')">엄격</button>
         </div>
-        <details class="raw">
-          <summary>고급 (개발용 미세조정)</summary>
-          <div class="row"><span style="min-width:80px">최소 크기</span><input id="minArea" type="range" min="2" max="40" value="10"><b id="minAreaV">10%</b></div>
-          <div class="row"><span style="min-width:80px">중앙 허용</span><input id="center" type="range" min="10" max="50" value="28"><b id="centerV">28%</b></div>
-          <div class="row"><span style="min-width:80px">안정 프레임</span><input id="streak" type="range" min="1" max="10" value="4"><b id="streakV">4</b></div>
-          <div class="row"><span style="min-width:80px">최소 신뢰도</span><input id="conf" type="range" min="30" max="90" value="55"><b id="confV">55%</b></div>
-          <p style="margin-top:8px">여기서 찾은 값을 iOS의 AutoShutterController에 그대로 넣으세요.</p>
-        </details>
       </div>
     </div>
   </div>
 
-  <!-- ALBUM -->
   <div id="album" style="display:none;">
     <div id="petStrip"></div>
     <div id="grid"></div>
     <div id="empty" style="display:none;"><div class="big">🐾</div><p>아직 사진이 없어요<br>카메라로 첫 컷을 찍어보세요!</p></div>
   </div>
 
-  <!-- CREATE -->
   <div id="create" style="display:none;">
-    <button class="crcard" onclick="makeBirthday()"><span class="emoji">🎂</span><span><span class="ct">생일 카드</span><br><span class="cd">우리 아이 생일 축하 카드</span></span></button>
-    <button class="crcard" onclick="makeHighlight()"><span class="emoji">🎬</span><span><span class="ct">하이라이트 영상</span><br><span class="cd">베스트 컷 슬라이드쇼</span></span></button>
-    <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">처음과 지금을 나란히</span></span></button>
-    <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">인생네컷 스타일 4컷</span></span></button>
+    <button class="crcard" onclick="makeBirthday()"><span class="emoji">🎂</span><span><span class="ct">생일 카드</span><br><span class="cd">사진 1장으로 생일 축하 카드</span></span></button>
+    <button class="crcard" onclick="makeHighlight()"><span class="emoji">🎬</span><span><span class="ct">하이라이트 영상</span><br><span class="cd">고른 사진들로 슬라이드쇼</span></span></button>
+    <button class="crcard" onclick="makeSticker()"><span class="emoji">✨</span><span><span class="ct">스티커 사진</span><br><span class="cd">발바닥·하트·파티 등 5가지 스타일</span></span></button>
+    <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">두 사진을 골라 나란히</span></span></button>
+    <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">사진 4장 골라 인생네컷</span></span></button>
     <p class="crhint">사진을 먼저 몇 장 찍어두면 더 예쁘게 만들어져요 🐾</p>
   </div>
 </div>
@@ -272,16 +199,31 @@
   <button class="addbtn" onclick="openAdd()">+ 새로운 아이 등록</button>
 </div></div>
 
-<!-- Add pet sheet -->
+<!-- Add pet -->
 <div class="sheet" id="addSheet"><div class="sheetbox">
   <h2>반려동물 등록 🐾</h2>
   <label class="fld">이름</label>
   <input class="input" id="inName" placeholder="예: 초코" oninput="checkAdd()">
   <label class="fld">종류</label>
   <div class="seg" id="typeSeg">
-    <button data-t="dog" class="on" onclick="pick('type','dog')">강아지</button>
-    <button data-t="cat" onclick="pick('type','cat')">고양이</button>
-    <button data-t="other" onclick="pick('type','other')">기타</button>
+    <button data-t="dog" class="on" onclick="pickType('dog')">강아지</button>
+    <button data-t="cat" onclick="pickType('cat')">고양이</button>
+    <button data-t="bird" onclick="pickType('bird')">새</button>
+    <button data-t="other" onclick="pickType('other')">기타</button>
+  </div>
+  <div id="otherWrap" style="display:none;">
+    <label class="fld">어떤 친구예요?</label>
+    <div class="seg wrap" id="otherSeg">
+      <button data-o="햄스터" onclick="pickOther('햄스터')">햄스터</button>
+      <button data-o="토끼" onclick="pickOther('토끼')">토끼</button>
+      <button data-o="도마뱀" onclick="pickOther('도마뱀')">도마뱀</button>
+      <button data-o="거북이" onclick="pickOther('거북이')">거북이</button>
+      <button data-o="고슴도치" onclick="pickOther('고슴도치')">고슴도치</button>
+      <button data-o="페럿" onclick="pickOther('페럿')">페럿</button>
+      <button data-o="기니피그" onclick="pickOther('기니피그')">기니피그</button>
+      <button data-o="물고기" onclick="pickOther('물고기')">물고기</button>
+    </div>
+    <input class="input" id="otherCustom" style="margin-top:8px;" placeholder="직접 입력 (예: 슈가글라이더)" oninput="otherCustomInput()">
   </div>
   <label class="fld">성별</label>
   <div class="seg" id="sexSeg">
@@ -294,7 +236,7 @@
 </div></div>
 
 <!-- Lightbox -->
-<div id="light"><img id="lightImg">
+<div id="light"><img id="lightImg" alt="">
   <div id="fxRow">
     <button class="fx on" id="fxOff" onclick="setFx(null,this)">원본</button>
     <button class="fx" onclick="setFx('standard',this)">✨ 기본</button>
@@ -309,14 +251,21 @@
     <button onclick="closeLight()">닫기</button>
   </div></div>
 
-<!-- Result (image output) -->
+<!-- Result -->
 <div id="result"><img id="resImg" alt="">
+  <div id="resStyles" style="display:none;">
+    <button onclick="renderSticker('paws')">🐾 발바닥</button>
+    <button onclick="renderSticker('hearts')">💕 하트</button>
+    <button onclick="renderSticker('stars')">⭐ 반짝</button>
+    <button onclick="renderSticker('party')">🎉 파티</button>
+    <button onclick="renderSticker('speech')">💬 말풍선</button>
+  </div>
   <div class="acts">
     <a id="resDl" download="">저장</a>
     <button onclick="closeResult()">닫기</button>
   </div></div>
 
-<!-- Player (highlight video) -->
+<!-- Player -->
 <div id="player">
   <canvas id="plCanvas" width="1080" height="1080"></canvas>
   <div id="recHint"></div>
@@ -325,20 +274,17 @@
     <button onclick="closePlayer()">닫기</button>
   </div></div>
 
-<!-- Photo picker (then vs now) -->
+<!-- Picker -->
 <div id="picker"><div class="pkbox">
   <h2 id="pkTitle">사진을 고르세요</h2>
   <div id="pkGrid"></div>
-  <div class="acts">
-    <button id="pkMake" onclick="confirmThenNow()" disabled>만들기</button>
-    <button onclick="closePicker()">닫기</button>
-  </div>
+  <div class="acts"><button id="pkMake" onclick="pkConfirm()" disabled>만들기</button><button onclick="closePicker()">닫기</button></div>
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script>
-/* ---------- persistence ---------- */
+/* ---------- storage ---------- */
 let db;
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('petcam',1);
   r.onupgradeneeded=e=>{const d=e.target.result;
@@ -347,9 +293,9 @@ function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('petcam'
   r.onsuccess=e=>{db=e.target.result;res();};r.onerror=()=>rej(r.error);});}
 const store=(n,m)=>db.transaction(n,m).objectStore(n);
 const idbPut=(n,v)=>new Promise((res,rej)=>{const r=store(n,'readwrite').put(v);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
-const idbDel=(n,k)=>new Promise((res)=>{const r=store(n,'readwrite').delete(k);r.onsuccess=()=>res();});
-const idbAll=(n)=>new Promise((res)=>{const o=[];const r=store(n,'readonly').openCursor();r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});
-function photosFor(petId){return new Promise((res)=>{const o=[];const r=store('photos','readonly').index('pet').openCursor(IDBKeyRange.only(petId));
+const idbDel=(n,k)=>new Promise(res=>{const r=store(n,'readwrite').delete(k);r.onsuccess=()=>res();});
+const idbAll=(n)=>new Promise(res=>{const o=[];const r=store(n,'readonly').openCursor();r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});
+function photosFor(id){return new Promise(res=>{const o=[];const r=store('photos','readonly').index('pet').openCursor(IDBKeyRange.only(id));
   r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o.sort((a,b)=>b.ts-a.ts));};});}
 
 let pets=JSON.parse(localStorage.getItem('pets')||'[]');
@@ -357,34 +303,35 @@ let activeId=localStorage.getItem('active')||null;
 const savePets=()=>{localStorage.setItem('pets',JSON.stringify(pets));localStorage.setItem('active',activeId||'');};
 const active=()=>pets.find(p=>p.id===activeId);
 
-/* ---------- thresholds ---------- */
+/* ---------- thresholds + auto toggle ---------- */
 const T={minArea:.10,center:.28,streak:4,conf:.55};
 const SENS={high:{minArea:.06,center:.34,streak:3,conf:.45},med:{minArea:.10,center:.28,streak:4,conf:.55},low:{minArea:.16,center:.22,streak:6,conf:.65}};
 let sens=localStorage.getItem('sens')||'med';
 function applySens(s){sens=s;localStorage.setItem('sens',s);Object.assign(T,SENS[s]);
-  document.querySelectorAll('#sensRow button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
-  syncRaw();}
+  document.querySelectorAll('#sensRow button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));}
 function setSens(s){applySens(s);}
-function syncRaw(){minArea.value=Math.round(T.minArea*100);minAreaV.textContent=minArea.value+'%';
-  center.value=Math.round(T.center*100);centerV.textContent=center.value+'%';
-  streak.value=T.streak;streakV.textContent=T.streak;conf.value=Math.round(T.conf*100);confV.textContent=conf.value+'%';}
-function bindRaw(id,key,fmt,scale){const el=document.getElementById(id),o=document.getElementById(id+'V');
-  el.oninput=()=>{T[key]=el.value*scale;o.textContent=fmt(el.value);};}
-bindRaw('minArea','minArea',v=>v+'%',.01);bindRaw('center','center',v=>v+'%',.01);
-bindRaw('streak','streak',v=>v,1);bindRaw('conf','conf',v=>v+'%',.01);
 function toggleAdv(){adv.style.display=adv.style.display==='block'?'none':'block';}
+let autoOn=localStorage.getItem('auto')==='1';
+function syncAuto(){document.getElementById('autoSw').classList.toggle('on',autoOn);
+  document.getElementById('autoLabel').textContent=autoOn?'자동 촬영 켜짐':'자동 촬영 꺼짐';}
+function toggleAuto(){autoOn=!autoOn;localStorage.setItem('auto',autoOn?'1':'0');syncAuto();}
 
-/* ---------- sounds ---------- */
-let actx;const SYN={squeak:[1500,2400,140,'삑삑이'],meow:[600,420,300,'야옹'],bird:[2600,3200,90,'새소리'],bell:[900,1400,200,'초인종'],kiss:[1800,1200,120,'쪽쪽']};
+/* ---------- audio ---------- */
+let actx=null;
+function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(actx&&actx.state==='suspended')actx.resume();return actx;}
+const SYN={squeak:[1500,2400,140,'삑삑이'],meow:[600,420,300,'야옹'],bird:[2600,3200,90,'새소리'],bell:[900,1400,200,'초인종'],kiss:[1800,1200,120,'쪽쪽']};
+function playSyn(name){const a=ensureAudio();if(!a)return;const[f1,f2,ms]=SYN[name];
+  const o=a.createOscillator(),g=a.createGain();o.frequency.setValueAtTime(f1,a.currentTime);
+  o.frequency.linearRampToValueAtTime(f2,a.currentTime+ms/1000);g.gain.setValueAtTime(.22,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+ms/1000);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+ms/1000);}
+const voiceBuf={};
+async function playVoice(v){const a=ensureAudio();if(!a)return;
+  if(!voiceBuf[v.id]){try{const ab=await(await fetch(v.dataUrl)).arrayBuffer();voiceBuf[v.id]=await a.decodeAudioData(ab);}catch(e){new Audio(v.dataUrl).play();return;}}
+  const s=a.createBufferSource();s.buffer=voiceBuf[v.id];s.connect(a.destination);s.start();}
 let selectedSound=null;
-function playSyn(name){actx=actx||new(window.AudioContext||window.webkitAudioContext)();
-  const[f1,f2,ms]=SYN[name];const o=actx.createOscillator(),g=actx.createGain();
-  o.frequency.setValueAtTime(f1,actx.currentTime);o.frequency.linearRampToValueAtTime(f2,actx.currentTime+ms/1000);
-  g.gain.setValueAtTime(.22,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+ms/1000);
-  o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+ms/1000);}
-function playSelected(){if(!selectedSound)return;
-  if(selectedSound.kind==='syn')playSyn(selectedSound.name);else new Audio(selectedSound.dataUrl).play();}
-function chooseSound(btn,snd){
+function playSelected(){if(!selectedSound)return;selectedSound.kind==='syn'?playSyn(selectedSound.name):playVoice(selectedSound);}
+function chooseSound(btn,snd){ensureAudio();
   if(selectedSound&&selectedSound.key===snd.key){selectedSound=null;btn.classList.remove('sel');return;}
   selectedSound=snd;document.querySelectorAll('.snd').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');playSelected();}
 async function renderSounds(){const row=document.getElementById('sounds');row.innerHTML='';
@@ -393,25 +340,23 @@ async function renderSounds(){const row=document.getElementById('sounds');row.in
     b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
   const voices=await idbAll('voices');
   voices.forEach(v=>{const wrap=document.createElement('div');wrap.className='snd voicechip';
-    const snd={kind:'voice',dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)wrap.classList.add('sel');
+    const snd={kind:'voice',id:v.id,dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)wrap.classList.add('sel');
     const lbl=document.createElement('span');lbl.textContent='🎵 '+v.name;lbl.onclick=()=>chooseSound(wrap,snd);
-    const del=document.createElement('span');del.className='vdel';del.textContent='✕';
-    del.onclick=e=>{e.stopPropagation();deleteVoice(v.id);};
+    const del=document.createElement('span');del.className='vdel';del.textContent='✕';del.onclick=e=>{e.stopPropagation();deleteVoice(v.id);};
     wrap.appendChild(lbl);wrap.appendChild(del);row.appendChild(wrap);});
-  const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';
-  rec.onclick=recordVoice;row.appendChild(rec);}
-async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))return;
-  if(selectedSound&&selectedSound.key==='voice:'+id)selectedSound=null;
-  await idbDel('voices',id);renderSounds();}
+  const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';rec.onclick=recordVoice;row.appendChild(rec);}
+async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))return;if(selectedSound&&selectedSound.key==='voice:'+id)selectedSound=null;delete voiceBuf[id];await idbDel('voices',id);renderSounds();}
+let mediaRec=null,recChunks=[];
 async function recordVoice(){const btn=document.getElementById('recBtn');
-  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});
-    const rec=new MediaRecorder(s);const chunks=[];rec.ondataavailable=e=>chunks.push(e.data);
-    rec.onstop=async()=>{s.getTracks().forEach(t=>t.stop());
-      const blob=new Blob(chunks,{type:rec.mimeType});const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});
-      const n=(await idbAll('voices')).length+1;await idbPut('voices',{id:'v'+Date.now(),name:'목소리'+n,dataUrl:url});renderSounds();};
-    btn.classList.add('recording');btn.textContent='🔴 녹음 중…';rec.start();
-    setTimeout(()=>{if(rec.state!=='inactive')rec.stop();},3000);}
-  catch(e){alert('마이크 권한이 필요해요.');}}
+  if(mediaRec&&mediaRec.state==='recording'){mediaRec.stop();return;}
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});mediaRec=new MediaRecorder(s);recChunks=[];
+    mediaRec.ondataavailable=e=>e.data.size&&recChunks.push(e.data);
+    mediaRec.onstop=async()=>{s.getTracks().forEach(t=>t.stop());const blob=new Blob(recChunks,{type:mediaRec.mimeType});
+      const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});
+      const n=(await idbAll('voices')).length+1;await idbPut('voices',{id:'v'+Date.now(),name:'목소리'+n,dataUrl:url});mediaRec=null;renderSounds();};
+    btn.classList.add('recording');btn.textContent='■ 정지 (탭)';mediaRec.start();
+    setTimeout(()=>{if(mediaRec&&mediaRec.state==='recording')mediaRec.stop();},8000);}
+  catch(e){toast('마이크 권한이 필요해요');}}
 
 /* ---------- camera ---------- */
 const video=document.getElementById('video'),overlay=document.getElementById('overlay'),octx=overlay.getContext('2d');
@@ -419,13 +364,10 @@ const statusEl=document.getElementById('status'),lockfill=document.getElementByI
 async function startCamera(){const hi={width:{ideal:1920},height:{ideal:1080}};
   for(const c of[{video:{facingMode:{ideal:'environment'},...hi}},{video:{...hi}},{video:true}]){
   try{const s=await navigator.mediaDevices.getUserMedia(c);video.srcObject=s;await video.play();return true;}catch(e){}}return false;}
-
-/* sharpness + motion */
 const sc=document.createElement('canvas');sc.width=sc.height=160;const sctx=sc.getContext('2d',{willReadFrequently:true});
 function sharpness(cv){sctx.drawImage(cv,0,0,160,160);const d=sctx.getImageData(0,0,160,160).data;const g=new Float32Array(160*160);
   for(let i=0;i<160*160;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
-  let s=0,sq=0,n=0;for(let y=1;y<159;y++)for(let x=1;x<159;x++){const i=y*160+x;
-    const l=4*g[i]-g[i-1]-g[i+1]-g[i-160]-g[i+160];s+=l;sq+=l*l;n++;}const m=s/n;return Math.round(sq/n-m*m);}
+  let s=0,sq=0,n=0;for(let y=1;y<159;y++)for(let x=1;x<159;x++){const i=y*160+x;const l=4*g[i]-g[i-1]-g[i+1]-g[i-160]-g[i+160];s+=l;sq+=l*l;n++;}const m=s/n;return Math.round(sq/n-m*m);}
 const mc=document.createElement('canvas');mc.width=mc.height=64;const mctx=mc.getContext('2d',{willReadFrequently:true});
 let prevGray=null;
 function motion(){mctx.drawImage(video,0,0,64,64);const d=mctx.getImageData(0,0,64,64).data;const g=new Float32Array(64*64);
@@ -435,61 +377,57 @@ function grab(){const c=document.createElement('canvas');c.width=video.videoWidt
 function compress(cv,max=1600,q=.92){const s=Math.min(1,max/Math.max(cv.width,cv.height));const w=Math.round(cv.width*s),h=Math.round(cv.height*s);
   const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(cv,0,0,w,h);return c.toDataURL('image/jpeg',q);}
 
-/* ---------- auto-shutter ---------- */
 const SPECIES=['dog','cat','bird'];
-let model,state='search',streakN=0,burst=[],lastShot=0;const BURST=6,COOLDOWN=2000;
+let model,state='search',streakN=0,burst=[],lastShot=0,otherArmed=true;const BURST=6,COOLDOWN=2000;
 function goodPet(preds){const fw=video.videoWidth,fh=video.videoHeight;let best=null,ba=0;
   for(const p of preds){if(!SPECIES.includes(p.class)||p.score<T.conf)continue;
     const[x,y,w,h]=p.bbox,area=(w*h)/(fw*fh);if(area<T.minArea)continue;
-    const cx=(x+w/2)/fw-.5,cy=(y+h/2)/fh-.5;if(Math.hypot(cx,cy)>T.center)continue;
-    if(area>ba){ba=area;best=p;}}return best;}
+    const cx=(x+w/2)/fw-.5,cy=(y+h/2)/fh-.5;if(Math.hypot(cx,cy)>T.center)continue;if(area>ba){ba=area;best=p;}}return best;}
 function drawBoxes(preds,locked){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);
   for(const p of preds){if(!SPECIES.includes(p.class))continue;const[x,y,w,h]=p.bbox;
-    octx.strokeStyle=(locked===p)?'#5FC9A6':'rgba(255,255,255,.55)';octx.lineWidth=4;
-    octx.beginPath();octx.roundRect(x,y,w,h,16);octx.stroke();}}
-function setStatus(t){statusEl.textContent=t;}
+    octx.strokeStyle=(locked===p)?'#5FC9A6':'rgba(255,255,255,.55)';octx.lineWidth=4;octx.beginPath();octx.roundRect(x,y,w,h,16);octx.stroke();}}
 function clearOverlay(){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);}
+function setStatus(t){statusEl.textContent=t;}
+function anyModalOpen(){return['light','result','player','picker','petSheet','addSheet'].some(id=>document.getElementById(id).classList.contains('on'));}
 
 async function loop(){
-  if(model&&video.readyState>=2&&!petSheetOpen()){
-    if(state==='cooldown'){if(Date.now()-lastShot>COOLDOWN){state='search';setStatus('우리 아이 찾는 중…');}}
-    else if(state==='capturing'){burst.push(grab());if(burst.length>=BURST)finishBurst();}
-    else{
-      const isOther=active()&&active().type==='other';
-      if(isOther){const mv=motion();const thr=sens==='high'?9:sens==='low'?4:6;
-        if(mv<thr){streakN++;setStatus('가만히… 찰칵 준비!');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
-          if(streakN>=T.streak){state='capturing';burst=[grab()];setStatus('찰칵! 연사 중');}}
-        else{streakN=0;lockfill.style.width='0';setStatus('우리 아이를 비춰주세요');}
-        clearOverlay();}
-      else{const preds=await model.detect(video);const pet=goodPet(preds);
-        if(pet){streakN++;setStatus('쳐다보는 중…');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
-          if(streakN>=T.streak){state='capturing';burst=[grab()];setStatus('찰칵! 연사 중');}}
-        else{streakN=0;lockfill.style.width='0';setStatus('우리 아이 찾는 중…');}
-        drawBoxes(preds,pet);}
+  if(model&&video.readyState>=2){
+    if(state==='capturing'){burst.push(grab());if(burst.length>=BURST)finishBurst();}
+    else if(curTab==='cam'&&!anyModalOpen()){
+      if(state==='cooldown'){if(Date.now()-lastShot>COOLDOWN)state='search';}
+      else{
+        const p=active(),isOther=p&&p.type==='other';
+        if(isOther){const mv=motion(),thr=sens==='high'?9:sens==='low'?4:6;
+          if(mv>thr*2.2)otherArmed=true;
+          if(autoOn&&mv<thr&&otherArmed){streakN++;setStatus('가만히… 찰칵 준비!');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
+            if(streakN>=T.streak){state='capturing';burst=[grab()];otherArmed=false;setStatus('찰칵! 연사 중');}}
+          else{streakN=0;lockfill.style.width='0';setStatus(autoOn?'움직임이 멎으면 찍어요':'버튼을 눌러 촬영');}
+          clearOverlay();}
+        else{const preds=await model.detect(video),pet=goodPet(preds);
+          if(autoOn&&pet){streakN++;setStatus('쳐다보는 중…');lockfill.style.width=Math.min(100,streakN/T.streak*100)+'%';
+            if(streakN>=T.streak){state='capturing';burst=[grab()];setStatus('찰칵! 연사 중');}}
+          else{streakN=0;lockfill.style.width='0';setStatus(autoOn?(pet?'쳐다보는 중…':'우리 아이 찾는 중…'):'버튼을 눌러 촬영');}
+          drawBoxes(preds,pet);}
+      }
     }
   }
   requestAnimationFrame(loop);
 }
 function finishBurst(){const frames=burst;burst=[];lastShot=Date.now();streakN=0;state='cooldown';lockfill.style.width='0';setStatus('베스트 컷 고르는 중…');
   let best=null,bs=-1;for(const f of frames){const s=sharpness(f);if(s>bs){bs=s;best=f;}}if(best)saveShot(best);}
-function manualShot(){playSelected();if(state==='capturing')return;burst=[grab()];state='capturing';setStatus('찰칵! 연사 중');}
+function manualShot(){if(curTab!=='cam'||anyModalOpen())return;playSelected();if(state==='capturing')return;burst=[grab()];state='capturing';setStatus('찰칵! 연사 중');}
 async function saveShot(cv){const dataUrl=compress(cv);const pet=active();if(!pet){openAdd();return;}
   await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl,ts:Date.now()});
-  const i=pets.findIndex(p=>p.id===pet.id);
-  if(i>=0&&!pets[i].avatarUrl){pets[i].avatarUrl=await makeFaceAvatar(dataUrl);savePets();refreshHeader();}
-  setStatus('앨범에 저장됐어요!');setTimeout(()=>{if(state!=='capturing')setStatus('우리 아이 찾는 중…');},1200);
+  const i=pets.findIndex(p=>p.id===pet.id);if(i>=0&&!pets[i].avatarUrl){pets[i].avatarUrl=await makeFaceAvatar(dataUrl);savePets();refreshHeader();}
+  setStatus('앨범에 저장됐어요!');setTimeout(()=>{if(state!=='capturing')setStatus(autoOn?'우리 아이 찾는 중…':'버튼을 눌러 촬영');},1200);
   if(curTab==='album')renderAlbum();}
 
-/* face cutout avatar: crops to the detected pet (head-biased), circular */
 function loadImg(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
 async function makeFaceAvatar(dataUrl){const img=await loadImg(dataUrl);let box=null;
-  try{const preds=await model.detect(img);let ba=0;
-    for(const p of preds){if(!SPECIES.includes(p.class))continue;const[x,y,w,h]=p.bbox;if(w*h>ba){ba=w*h;box=p.bbox;}}}catch(e){}
+  try{const preds=await model.detect(img);let ba=0;for(const p of preds){if(!SPECIES.includes(p.class))continue;const[x,y,w,h]=p.bbox;if(w*h>ba){ba=w*h;box=p.bbox;}}}catch(e){}
   const S=220,c=document.createElement('canvas');c.width=c.height=S;const ctx=c.getContext('2d');
-  ctx.beginPath();ctx.arc(S/2,S/2,S/2,0,Math.PI*2);ctx.clip();
-  let sx,sy,side;
-  if(box){const[x,y,w,h]=box;side=Math.min(w,h)*0.95;
-    sx=x+w/2-side/2;sy=y+h*0.30-side/2;                 // bias upward toward the head
+  ctx.beginPath();ctx.arc(S/2,S/2,S/2,0,Math.PI*2);ctx.clip();let sx,sy,side;
+  if(box){const[x,y,w,h]=box;side=Math.min(w,h)*0.95;sx=x+w/2-side/2;sy=y+h*0.30-side/2;
     sx=Math.max(0,Math.min(sx,img.naturalWidth-side));sy=Math.max(0,Math.min(sy,img.naturalHeight-side));}
   else{side=Math.min(img.naturalWidth,img.naturalHeight);sx=(img.naturalWidth-side)/2;sy=(img.naturalHeight-side)/2;}
   ctx.drawImage(img,sx,sy,side,side,0,0,S,S);return c.toDataURL('image/jpeg',.9);}
@@ -503,121 +441,121 @@ function showTab(t){curTab=t;document.getElementById('camera').style.display=t==
   if(t==='album')renderAlbum();}
 function renderPetStrip(){const strip=document.getElementById('petStrip');strip.innerHTML='';
   [...pets].reverse().forEach(p=>{const d=document.createElement('button');d.className='petface'+(p.id===activeId?' on':'');
-    const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${AV[p.type]}</span>`;
-    d.innerHTML=fc+`<span class="fn">${p.name}</span>`;
-    d.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();renderAlbum();};strip.appendChild(d);});
-  const add=document.createElement('button');add.className='petface add';
-  add.innerHTML='<span class="fc">+</span><span class="fn">추가</span>';add.onclick=openAdd;strip.appendChild(add);}
+    const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${emojiFor(p)}</span>`;
+    d.innerHTML=fc+`<span class="fn">${p.name}</span>`;d.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();renderAlbum();};strip.appendChild(d);});
+  const add=document.createElement('button');add.className='petface add';add.innerHTML='<span class="fc">+</span><span class="fn">추가</span>';add.onclick=openAdd;strip.appendChild(add);}
 async function renderAlbum(){renderPetStrip();const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
   if(!pet){grid.innerHTML='';empty.style.display='block';return;}
   const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
   ph.forEach(p=>{const img=document.createElement('img');img.src=p.dataUrl;img.onclick=()=>openLight(p);grid.appendChild(img);});}
 
-/* lightbox + beautify filter */
+/* lightbox + filter */
 let curPhoto=null,curEnhancedUrl=null;
-const PRESETS={standard:{shadow:.5,contrast:.12,warmth:.04,sat:.20},
-               darkFur:{shadow:.72,contrast:.14,warmth:.05,sat:.22},
-               lightFur:{shadow:.30,contrast:.10,warmth:.03,sat:.15}};
+const PRESETS={standard:{shadow:.5,contrast:.12,warmth:.04,sat:.20},darkFur:{shadow:.72,contrast:.14,warmth:.05,sat:.22},lightFur:{shadow:.30,contrast:.10,warmth:.03,sat:.15}};
 function openLight(p){curPhoto=p;curEnhancedUrl=null;lightImg.src=p.dataUrl;lightDl.href=p.dataUrl;lightDl.download='pet.jpg';
   document.querySelectorAll('.fx').forEach(b=>b.classList.remove('on'));document.getElementById('fxOff').classList.add('on');
   document.getElementById('saveFxBtn').style.display='none';document.getElementById('light').classList.add('on');}
 function closeLight(){document.getElementById('light').classList.remove('on');}
 async function deleteCurrent(){if(curPhoto){await idbDel('photos',curPhoto.id);closeLight();renderAlbum();}}
 function setFx(name,btn){document.querySelectorAll('.fx').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  if(!name){curEnhancedUrl=null;lightImg.src=curPhoto.dataUrl;lightDl.href=curPhoto.dataUrl;
-    document.getElementById('saveFxBtn').style.display='none';return;}
-  lightImg.style.opacity=.5;
-  enhance(curPhoto.dataUrl,PRESETS[name]).then(url=>{curEnhancedUrl=url;lightImg.src=url;lightImg.style.opacity=1;
+  if(!name){curEnhancedUrl=null;lightImg.src=curPhoto.dataUrl;lightDl.href=curPhoto.dataUrl;document.getElementById('saveFxBtn').style.display='none';return;}
+  lightImg.style.opacity=.5;enhance(curPhoto.dataUrl,PRESETS[name]).then(url=>{curEnhancedUrl=url;lightImg.src=url;lightImg.style.opacity=1;
     lightDl.href=url;lightDl.download='pet_보정.jpg';document.getElementById('saveFxBtn').style.display='inline-block';});}
 const clamp=v=>v<0?0:v>1?1:v;
-const lift=(v,a)=>v+a*(Math.pow(v,.45)-v);          // gentle shadow lift
-const scurve=(v,c)=>clamp(v+c*Math.sin((v-.5)*Math.PI)); // soft S contrast
+const lift=(v,a)=>v+a*(Math.pow(v,.45)-v);
+const scurve=(v,c)=>clamp(v+c*Math.sin((v-.5)*Math.PI));
 function enhance(srcUrl,p){return new Promise(res=>{const img=new Image();img.onload=()=>{
-  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-  const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const im=ctx.getImageData(0,0,c.width,c.height);const d=im.data;
-  for(let i=0;i<d.length;i+=4){
-    let r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
-    r=lift(r,p.shadow);g=lift(g,p.shadow);b=lift(b,p.shadow);
-    r=scurve(r,p.contrast);g=scurve(g,p.contrast);b=scurve(b,p.contrast);
-    r=clamp(r+p.warmth);b=clamp(b-p.warmth*.7);
-    const lum=.299*r+.587*g+.114*b;
-    r=clamp(lum+(r-lum)*(1+p.sat));g=clamp(lum+(g-lum)*(1+p.sat));b=clamp(lum+(b-lum)*(1+p.sat));
-    d[i]=r*255;d[i+1]=g*255;d[i+2]=b*255;}
+  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+  const im=ctx.getImageData(0,0,c.width,c.height),d=im.data;
+  for(let i=0;i<d.length;i+=4){let r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
+    r=lift(r,p.shadow);g=lift(g,p.shadow);b=lift(b,p.shadow);r=scurve(r,p.contrast);g=scurve(g,p.contrast);b=scurve(b,p.contrast);
+    r=clamp(r+p.warmth);b=clamp(b-p.warmth*.7);const lum=.299*r+.587*g+.114*b;
+    r=clamp(lum+(r-lum)*(1+p.sat));g=clamp(lum+(g-lum)*(1+p.sat));b=clamp(lum+(b-lum)*(1+p.sat));d[i]=r*255;d[i+1]=g*255;d[i+2]=b*255;}
   ctx.putImageData(im,0,0);res(c.toDataURL('image/jpeg',.92));};img.src=srcUrl;});}
-async function saveEnhanced(){if(!curEnhancedUrl)return;const pet=active();
-  await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl:curEnhancedUrl,ts:Date.now()});closeLight();renderAlbum();}
-async function setRepresentative(){const pet=active();if(!pet||!curPhoto)return;
-  const src=curEnhancedUrl||curPhoto.dataUrl;const av=await makeFaceAvatar(src);
+async function saveEnhanced(){if(!curEnhancedUrl)return;const pet=active();await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl:curEnhancedUrl,ts:Date.now()});closeLight();renderAlbum();}
+async function setRepresentative(){const pet=active();if(!pet||!curPhoto)return;const src=curEnhancedUrl||curPhoto.dataUrl;const av=await makeFaceAvatar(src);
   const i=pets.findIndex(p=>p.id===pet.id);if(i>=0){pets[i].avatarUrl=av;savePets();refreshHeader();renderPetStrip();}closeLight();}
 
-/* pet header + sheets */
-const AV={dog:'🐶',cat:'🐱',other:'🐾'};
-function refreshHeader(){const p=active();const av=document.getElementById('petAvatar');
-  if(p){document.getElementById('petname').textContent=p.name;
-    document.getElementById('petsub').textContent=`${p.type==='dog'?'강아지':p.type==='cat'?'고양이':'기타'} · ${ageText(p)}`;
-    if(p.avatarUrl){av.textContent='';av.style.backgroundImage=`url(${p.avatarUrl})`;av.style.backgroundSize='cover';av.style.backgroundPosition='center';}
-    else{av.textContent=AV[p.type];av.style.backgroundImage='';}}
+/* ---------- header + sheets + registration ---------- */
+function emojiFor(p){const m={'강아지':'🐶','고양이':'🐱','새':'🦜','앵무새':'🦜','햄스터':'🐹','토끼':'🐰','도마뱀':'🦎','거북이':'🐢','고슴도치':'🦔','기니피그':'🐹','물고기':'🐟','뱀':'🐍'};
+  return m[p.species]||{dog:'🐶',cat:'🐱',bird:'🦜'}[p.type]||'🐾';}
+function typeLabel(p){return p.species||({dog:'강아지',cat:'고양이',bird:'새'}[p.type])||'기타';}
+function refreshHeader(){const p=active(),av=document.getElementById('petAvatar');
+  if(p){document.getElementById('petname').textContent=p.name;document.getElementById('petsub').textContent=`${typeLabel(p)} · ${ageText(p)}`;
+    if(p.avatarUrl){av.textContent='';av.style.backgroundImage=`url(${p.avatarUrl})`;}else{av.textContent=emojiFor(p);av.style.backgroundImage='';}}
   else{document.getElementById('petname').textContent='우리 아이';document.getElementById('petsub').textContent='등록해 주세요';av.textContent='🐾';av.style.backgroundImage='';}
-  if(typeof checkBirthday==='function')checkBirthday();}
-function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=new Date(p.birthMs);
-  let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();if(m<0){y--;m+=12;}
+  checkBirthday();}
+function ageText(p){if(!p.birthMs)return'나이 미상';const now=new Date(),b=new Date(p.birthMs);let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();if(m<0){y--;m+=12;}
   return y<=0?`${Math.max(m,0)}개월`:m===0?`${y}살`:`${y}살 ${m}개월`;}
-function petSheetOpen(){return document.getElementById('petSheet').classList.contains('on')||document.getElementById('addSheet').classList.contains('on');}
 function openPets(){const list=document.getElementById('petList');list.innerHTML='';
   pets.forEach(p=>{const r=document.createElement('div');r.className='petrow'+(p.id===activeId?' on':'');
-    const av=p.avatarUrl?`<span class="avatar" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="avatar">${AV[p.type]}</span>`;
-    r.innerHTML=`${av}<div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${ageText(p)}</div></div>`+
+    const av=p.avatarUrl?`<span class="avatar" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="avatar">${emojiFor(p)}</span>`;
+    r.innerHTML=`${av}<div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${typeLabel(p)} · ${ageText(p)}</div></div>`+
       `${p.id===activeId?'<span style="color:var(--coral);margin-right:4px">✓</span>':''}<span class="petdel" title="삭제">🗑️</span>`;
     r.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();};
-    r.querySelector('.petdel').onclick=e=>{e.stopPropagation();deletePet(p.id);};
-    list.appendChild(r);});
+    r.querySelector('.petdel').onclick=e=>{e.stopPropagation();deletePet(p.id);};list.appendChild(r);});
   document.getElementById('petSheet').classList.add('on');}
 async function deletePet(id){const p=pets.find(x=>x.id===id);if(!p)return;
   if(!confirm(`'${p.name}'와(과) 모든 사진을 삭제할까요? 되돌릴 수 없어요.`))return;
   const ph=await photosFor(id);for(const x of ph)await idbDel('photos',x.id);
-  pets=pets.filter(x=>x.id!==id);
-  if(activeId===id)activeId=pets.length?pets[pets.length-1].id:null;
-  savePets();refreshHeader();
-  if(pets.length===0){closeSheets();openAdd();}else openPets();
-  if(curTab==='album')renderAlbum();}
+  pets=pets.filter(x=>x.id!==id);if(activeId===id)activeId=pets.length?pets[pets.length-1].id:null;
+  savePets();refreshHeader();if(pets.length===0){closeSheets();openAdd();}else openPets();if(curTab==='album')renderAlbum();}
 function closeSheets(){document.getElementById('petSheet').classList.remove('on');document.getElementById('addSheet').classList.remove('on');}
 document.querySelectorAll('.sheet').forEach(s=>s.onclick=e=>{if(e.target===s)closeSheets();});
 
-/* add pet */
-let draft={type:'dog',sex:'male',bday:false};
-function openAdd(){draft={type:'dog',sex:'male',bday:false};document.getElementById('inName').value='';
+let draft={type:'dog',sex:'male',bday:false,species:'강아지',_o:null};
+function openAdd(){draft={type:'dog',sex:'male',bday:false,species:'강아지',_o:null};
+  document.getElementById('inName').value='';document.getElementById('otherCustom').value='';
   document.querySelectorAll('#typeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='dog'));
+  document.querySelectorAll('#otherSeg button').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('#sexSeg button').forEach(b=>b.classList.toggle('on',b.dataset.x==='male'));
-  document.getElementById('bdaySw').classList.remove('on');document.getElementById('inBday').style.display='none';
-  document.getElementById('saveBtn').disabled=true;
+  document.getElementById('otherWrap').style.display='none';document.getElementById('bdaySw').classList.remove('on');
+  document.getElementById('inBday').style.display='none';document.getElementById('saveBtn').disabled=true;
   document.getElementById('petSheet').classList.remove('on');document.getElementById('addSheet').classList.add('on');}
-function pick(kind,val){draft[kind]=val;const seg=kind==='type'?'#typeSeg':'#sexSeg',attr=kind==='type'?'t':'x';
-  document.querySelectorAll(seg+' button').forEach(b=>b.classList.toggle('on',b.dataset[attr]===val));}
-function toggleBday(){draft.bday=!draft.bday;document.getElementById('bdaySw').classList.toggle('on',draft.bday);
-  document.getElementById('inBday').style.display=draft.bday?'block':'none';}
-function checkAdd(){document.getElementById('saveBtn').disabled=!document.getElementById('inName').value.trim();}
+function pickType(v){draft.type=v;document.querySelectorAll('#typeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===v));
+  document.getElementById('otherWrap').style.display=v==='other'?'block':'none';
+  draft.species=v==='dog'?'강아지':v==='cat'?'고양이':v==='bird'?'새':(draft._o||document.getElementById('otherCustom').value.trim()||'');checkAdd();}
+function pickOther(v){draft._o=v;draft.species=v;document.getElementById('otherCustom').value='';
+  document.querySelectorAll('#otherSeg button').forEach(b=>b.classList.toggle('on',b.dataset.o===v));checkAdd();}
+function otherCustomInput(){const v=document.getElementById('otherCustom').value.trim();if(v){draft.species=v;draft._o=null;document.querySelectorAll('#otherSeg button').forEach(b=>b.classList.remove('on'));}checkAdd();}
+function pick(kind,val){draft[kind]=val;document.querySelectorAll('#sexSeg button').forEach(b=>b.classList.toggle('on',b.dataset.x===val));}
+function toggleBday(){draft.bday=!draft.bday;document.getElementById('bdaySw').classList.toggle('on',draft.bday);document.getElementById('inBday').style.display=draft.bday?'block':'none';}
+function checkAdd(){const name=document.getElementById('inName').value.trim();const ok=name&&(draft.type!=='other'||(draft.species&&draft.species.length));document.getElementById('saveBtn').disabled=!ok;}
 function savePet(){const name=document.getElementById('inName').value.trim();if(!name)return;
-  const bday=draft.bday?new Date(document.getElementById('inBday').value).getTime():null;
-  const pet={id:'pet'+Date.now(),name,type:draft.type,sex:draft.sex,birthMs:isNaN(bday)?null:bday};
+  const bd=draft.bday?new Date(document.getElementById('inBday').value).getTime():null;
+  const species=draft.species||({dog:'강아지',cat:'고양이',bird:'새'}[draft.type])||'기타';
+  const pet={id:'pet'+Date.now(),name,type:draft.type,species,sex:draft.sex,birthMs:isNaN(bd)?null:bd};
   pets.push(pet);activeId=pet.id;savePets();refreshHeader();closeSheets();prevGray=null;if(curTab==='album')renderAlbum();}
 
-/* ---------- create: shareable content ---------- */
+/* ---------- create: shared helpers ---------- */
 function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 function cover(x,img,dx,dy,dw,dh){const ir=img.width/img.height,dr=dw/dh;let sw,sh,sx,sy;
-  if(ir>dr){sh=img.height;sw=sh*dr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/dr;sx=0;sy=(img.height-sh)/2;}
-  x.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);}
+  if(ir>dr){sh=img.height;sw=sh*dr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/dr;sx=0;sy=(img.height-sh)/2;}x.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);}
 async function ensureFont(){try{await document.fonts.load('80px "Jua"');await document.fonts.ready;}catch(e){}}
-function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
-  t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1900);}
+function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1900);}
 function needPet(){const p=active();if(!p){toast('먼저 아이를 등록해 주세요');return null;}return p;}
-function showResult(dataUrl,filename){document.getElementById('resImg').src=dataUrl;
-  const dl=document.getElementById('resDl');dl.href=dataUrl;dl.download=filename;document.getElementById('result').classList.add('on');}
+function showResult(dataUrl,filename,sticker){document.getElementById('resImg').src=dataUrl;const dl=document.getElementById('resDl');dl.href=dataUrl;dl.download=filename;
+  document.getElementById('resStyles').style.display=sticker?'flex':'none';document.getElementById('result').classList.add('on');}
 function closeResult(){document.getElementById('result').classList.remove('on');}
 
-async function makeBirthday(){const p=needPet();if(!p)return;
-  const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 한 장 찍어주세요');return;}
-  await ensureFont();const img=await loadImg(ph[0].dataUrl);const S=1080,c=mkCanvas(S,S),x=c.getContext('2d');
+/* ---------- generic photo picker ---------- */
+let pk=null;
+function openPicker(o){pk={photos:o.photos,sel:[],min:o.min,max:o.max,labels:o.labels,title:o.title,cb:o.cb};renderPicker();document.getElementById('picker').classList.add('on');}
+function renderPicker(){const g=document.getElementById('pkGrid');g.innerHTML='';document.getElementById('pkTitle').textContent=pk.title;
+  pk.photos.forEach(p=>{const i=pk.sel.indexOf(p.id);const cell=document.createElement('div');cell.className='cell'+(i>=0?' sel':'');
+    let badge='';if(i>=0)badge=`<span class="pkbadge">${pk.labels?pk.labels[i]:(i+1)}</span>`;
+    cell.innerHTML=`<img src="${p.dataUrl}">${badge}`;cell.onclick=()=>pkToggle(p.id);g.appendChild(cell);});
+  document.getElementById('pkMake').disabled=!(pk.sel.length>=pk.min&&pk.sel.length<=pk.max);}
+function pkToggle(id){const i=pk.sel.indexOf(id);
+  if(i>=0)pk.sel.splice(i,1);else if(pk.sel.length<pk.max)pk.sel.push(id);else if(pk.max===1)pk.sel=[id];else{toast('최대 '+pk.max+'장까지 골라요');return;}renderPicker();}
+function closePicker(){document.getElementById('picker').classList.remove('on');}
+function pkConfirm(){if(pk.sel.length<pk.min)return;const chosen=pk.sel.map(id=>pk.photos.find(p=>p.id===id));closePicker();pk.cb(chosen);}
+
+/* ---------- create tools ---------- */
+async function makeBirthday(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
+  openPicker({photos:ph,min:1,max:1,title:'생일 카드에 넣을 사진을 골라요',cb:s=>renderBirthday(p,s[0].dataUrl)});}
+async function renderBirthday(p,url){await ensureFont();const img=await loadImg(url);const S=1080,c=mkCanvas(S,S),x=c.getContext('2d');
   x.fillStyle='#FFF6EF';x.fillRect(0,0,S,S);const cols=['#FF7E67','#5FC9A6','#FFC861','#ED93B1'];
   for(let i=0;i<46;i++){x.fillStyle=cols[i%4];x.globalAlpha=.85;x.beginPath();x.arc(Math.random()*S,Math.random()*S,6+Math.random()*13,0,7);x.fill();}x.globalAlpha=1;
   x.lineWidth=22;x.strokeStyle='#FF7E67';rrect(x,28,28,S-56,S-56,38);x.stroke();
@@ -628,98 +566,85 @@ async function makeBirthday(){const p=needPet();if(!p)return;
   x.fillStyle='#FF7E67';x.font='400 56px "Jua",sans-serif';x.fillText('오늘 '+ageText(p)+'! 🐾',S/2,966);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_birthday.jpg');}
 
-async function makeFourCut(){const p=needPet();if(!p)return;
-  const ph=await photosFor(p.id);if(ph.length<4){toast('사진 4장 이상이 필요해요');return;}
-  await ensureFont();const pick=ph.slice(0,4),W=720,pad=34,gap=22,cell=Math.round((W-pad*2)*0.72);
-  const H=pad+cell*4+gap*3+pad+60,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FF7E67';x.fillRect(0,0,W,H);
-  for(let i=0;i<4;i++){const img=await loadImg(pick[i].dataUrl);const y=pad+i*(cell+gap);
-    rrect(x,pad,y,W-pad*2,cell,16);x.save();x.clip();cover(x,img,pad,y,W-pad*2,cell);x.restore();}
-  const t=new Date();x.fillStyle='#fff';x.textAlign='center';x.font='400 40px "Jua",sans-serif';
-  x.fillText(p.name+' 🐾 '+t.getFullYear()+'.'+(t.getMonth()+1)+'.'+t.getDate(),W/2,H-26);
+async function makeFourCut(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(ph.length<4){toast('사진 4장 이상이 필요해요');return;}
+  openPicker({photos:ph,min:4,max:4,title:'네컷에 넣을 사진 4장 (탭한 순서대로)',cb:s=>renderFourCut(p,s.map(x=>x.dataUrl))});}
+async function renderFourCut(p,urls){await ensureFont();const W=720,pad=34,gap=22,cell=Math.round((W-pad*2)*0.72);
+  const H=pad+cell*4+gap*3+pad+50,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FF7E67';x.fillRect(0,0,W,H);
+  for(let i=0;i<4;i++){const img=await loadImg(urls[i]);const y=pad+i*(cell+gap);rrect(x,pad,y,W-pad*2,cell,16);x.save();x.clip();cover(x,img,pad,y,W-pad*2,cell);x.restore();}
+  const t=new Date();x.fillStyle='#fff';x.textAlign='center';x.font='400 40px "Jua",sans-serif';x.fillText(p.name+' 🐾 '+t.getFullYear()+'.'+(t.getMonth()+1)+'.'+t.getDate(),W/2,H-22);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_4cut.jpg');}
 
-let pkPhotos=[],pkThen=null,pkNow=null;
-async function makeThenNow(){const p=needPet();if(!p)return;
-  const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
-  pkPhotos=ph;pkThen=null;pkNow=null;renderPicker();document.getElementById('picker').classList.add('on');}
-function renderPicker(){const g=document.getElementById('pkGrid');g.innerHTML='';
-  document.getElementById('pkTitle').textContent=!pkThen?'\u201c그때\u201d 사진을 고르세요':(!pkNow?'\u201c지금\u201d 사진을 고르세요':'좋아요! 만들기를 눌러요');
-  pkPhotos.forEach(p=>{const cell=document.createElement('div');cell.className='cell';
-    const sel=p.id===pkThen?'그때':(p.id===pkNow?'지금':null);if(sel)cell.classList.add('sel');
-    cell.innerHTML=`<img src="${p.dataUrl}">`+(sel?`<span class="pkbadge">${sel}</span>`:'');
-    cell.onclick=()=>pickThenNow(p.id);g.appendChild(cell);});
-  document.getElementById('pkMake').disabled=!(pkThen&&pkNow);}
-function pickThenNow(id){
-  if(pkThen===id)pkThen=null;else if(pkNow===id)pkNow=null;
-  else if(!pkThen)pkThen=id;else pkNow=id;renderPicker();}
-function closePicker(){document.getElementById('picker').classList.remove('on');}
-async function confirmThenNow(){const p=active();const a=pkPhotos.find(x=>x.id===pkThen),b=pkPhotos.find(x=>x.id===pkNow);
-  if(!a||!b||!p)return;closePicker();await renderThenNow(p,a.dataUrl,b.dataUrl);}
+async function makeThenNow(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
+  openPicker({photos:ph,min:2,max:2,labels:['그때','지금'],title:'먼저 ‘그때’, 그다음 ‘지금’ 사진',cb:s=>renderThenNow(p,s[0].dataUrl,s[1].dataUrl)});}
 async function renderThenNow(p,aUrl,bUrl){await ensureFont();const a=await loadImg(aUrl),b=await loadImg(bUrl);
   const W=1600,H=920,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,W,H);
   const pad=30,iw=(W-pad*3)/2,iy=110,ih=H-iy-110;
   rrect(x,pad,iy,iw,ih,20);x.save();x.clip();cover(x,a,pad,iy,iw,ih);x.restore();
   rrect(x,pad*2+iw,iy,iw,ih,20);x.save();x.clip();cover(x,b,pad*2+iw,iy,iw,ih);x.restore();
-  x.fillStyle='#5A463B';x.textAlign='center';x.font='400 58px "Jua",sans-serif';
-  x.fillText('그때',pad+iw/2,80);x.fillText('지금',pad*2+iw+iw/2,80);
+  x.fillStyle='#5A463B';x.textAlign='center';x.font='400 58px "Jua",sans-serif';x.fillText('그때',pad+iw/2,80);x.fillText('지금',pad*2+iw+iw/2,80);
   x.fillStyle='#FF7E67';x.font='400 52px "Jua",sans-serif';x.fillText(p.name+' 🐾',W/2,H-40);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_thennow.jpg');}
 
-/* highlight slideshow + webm export */
+/* sticker */
+let stkUrl=null,stkPet=null;
+async function makeSticker(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
+  openPicker({photos:ph,min:1,max:1,title:'스티커를 붙일 사진을 골라요',cb:s=>{stkPet=p;stkUrl=s[0].dataUrl;renderSticker('paws');}});}
+function scatter(x,S,emojis){x.textAlign='center';x.textBaseline='middle';const N=18;
+  for(let i=0;i<N;i++){const t=i/N*Math.PI*2,r=S*0.455,px=S/2+Math.cos(t)*r,py=S/2+Math.sin(t)*r,sz=42+Math.random()*26;
+    x.font=`${sz}px "Jua",sans-serif`;x.fillText(emojis[i%emojis.length],px,py);}x.textBaseline='alphabetic';}
+async function renderSticker(style){if(!stkUrl)return;await ensureFont();const img=await loadImg(stkUrl);
+  const S=1080,m=92,c=mkCanvas(S,S),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,S,S);
+  rrect(x,m,m,S-2*m,S-2*m,40);x.save();x.clip();cover(x,img,m,m,S-2*m,S-2*m);x.restore();
+  x.lineWidth=16;x.strokeStyle='#fff';rrect(x,m,m,S-2*m,S-2*m,40);x.stroke();
+  if(style==='speech'){const txt=stkPet.type==='cat'?'야옹!':stkPet.type==='dog'?'멍멍!':'안녕!';
+    x.font='400 62px "Jua",sans-serif';const w=x.measureText(txt).width+80,bx=S-w-60,by=70;
+    x.fillStyle='#fff';rrect(x,bx,by,w,116,32);x.fill();x.beginPath();x.moveTo(bx+60,by+116);x.lineTo(bx+40,by+170);x.lineTo(bx+110,by+116);x.closePath();x.fill();
+    x.fillStyle='#FF7E67';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,bx+w/2,by+58);x.textBaseline='alphabetic';}
+  else{const sets={paws:['🐾'],hearts:['💕','💗','❤️'],stars:['⭐','🌟','✨'],party:['🎉','🎂','🎈','⭐']};scatter(x,S,sets[style]||['🐾']);}
+  showResult(c.toDataURL('image/jpeg',.95),(stkPet.name||'pet')+'_sticker.jpg',true);}
+
+/* highlight */
 let hlRAF=null,hlMusic=null,hlImgs=[],hlPet=null;
-async function makeHighlight(){const p=needPet();if(!p)return;
-  const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
-  await ensureFont();hlImgs=[];for(const it of ph.slice(0,12))hlImgs.push(await loadImg(it.dataUrl));hlPet=p;
-  const canRec=!!(document.getElementById('plCanvas').captureStream&&window.MediaRecorder);
-  document.getElementById('plSave').style.display=canRec?'inline-block':'none';
-  document.getElementById('recHint').textContent='';document.getElementById('player').classList.add('on');playHighlight();}
-function playHighlight(){const c=document.getElementById('plCanvas'),x=c.getContext('2d'),S=c.width;
-  const DUR=2100,FADE=480;let idx=0,t0=performance.now();stopHighlight();startMusic();
-  function zoom(img,z){const s=Math.min(img.width,img.height),sx=(img.width-s)/2,sy=(img.height-s)/2,d=S*z,off=(d-S)/2;
-    x.drawImage(img,sx,sy,s,s,-off,-off,d,d);}
-  function cap(){const n=hlPet.name+' 🐾';x.font='400 46px "Jua",sans-serif';x.textAlign='left';x.textBaseline='middle';
-    const w=x.measureText(n).width+40;x.fillStyle='rgba(0,0,0,.42)';rrect(x,28,S-94,w,60,30);x.fill();
-    x.fillStyle='#fff';x.fillText(n,50,S-64);x.textBaseline='alphabetic';}
-  function frame(now){const el=now-t0;x.fillStyle='#000';x.fillRect(0,0,S,S);
-    zoom(hlImgs[idx%hlImgs.length],1.04+0.12*Math.min(el/DUR,1));
-    if(el>DUR-FADE){x.globalAlpha=(el-(DUR-FADE))/FADE;zoom(hlImgs[(idx+1)%hlImgs.length],1.04);x.globalAlpha=1;}
-    cap();if(el>=DUR){idx++;t0=now;}hlRAF=requestAnimationFrame(frame);}
+async function makeHighlight(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
+  openPicker({photos:ph,min:2,max:12,title:'영상에 넣을 사진 (2~12장, 탭한 순서대로)',cb:async s=>{await ensureFont();hlImgs=[];for(const it of s)hlImgs.push(await loadImg(it.dataUrl));hlPet=p;
+    const canRec=!!(document.getElementById('plCanvas').captureStream&&window.MediaRecorder);
+    document.getElementById('plSave').style.display=canRec?'inline-block':'none';document.getElementById('recHint').textContent='';
+    document.getElementById('player').classList.add('on');playHighlight();}});}
+function playHighlight(){const c=document.getElementById('plCanvas'),x=c.getContext('2d'),S=c.width,DUR=2100,FADE=480;let idx=0,t0=performance.now();stopHighlight();startMusic();
+  function zoom(img,z){const s=Math.min(img.width,img.height),sx=(img.width-s)/2,sy=(img.height-s)/2,d=S*z,off=(d-S)/2;x.drawImage(img,sx,sy,s,s,-off,-off,d,d);}
+  function cap(){const n=hlPet.name+' 🐾';x.font='400 46px "Jua",sans-serif';x.textAlign='left';x.textBaseline='middle';const w=x.measureText(n).width+40;
+    x.fillStyle='rgba(0,0,0,.42)';rrect(x,28,S-94,w,60,30);x.fill();x.fillStyle='#fff';x.fillText(n,50,S-64);x.textBaseline='alphabetic';}
+  function frame(now){const el=now-t0;x.fillStyle='#000';x.fillRect(0,0,S,S);zoom(hlImgs[idx%hlImgs.length],1.04+0.12*Math.min(el/DUR,1));
+    if(el>DUR-FADE){x.globalAlpha=(el-(DUR-FADE))/FADE;zoom(hlImgs[(idx+1)%hlImgs.length],1.04);x.globalAlpha=1;}cap();if(el>=DUR){idx++;t0=now;}hlRAF=requestAnimationFrame(frame);}
   hlRAF=requestAnimationFrame(frame);}
-function startMusic(){stopMusic();try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
-  const notes=[523,659,784,659,587,698,880,698];let i=0;
-  hlMusic=setInterval(()=>{const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=notes[i%notes.length];
-    g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.exponentialRampToValueAtTime(.10,actx.currentTime+.04);
-    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+.45);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.45);i++;},430);}
+function startMusic(){stopMusic();const a=ensureAudio();if(!a)return;const notes=[523,659,784,659,587,698,880,698];let i=0;
+  hlMusic=setInterval(()=>{const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=notes[i%notes.length];
+    g.gain.setValueAtTime(.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(.10,a.currentTime+.04);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.45);
+    o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.45);i++;},430);}
 function stopMusic(){if(hlMusic){clearInterval(hlMusic);hlMusic=null;}}
 function stopHighlight(){if(hlRAF){cancelAnimationFrame(hlRAF);hlRAF=null;}stopMusic();}
 function closePlayer(){stopHighlight();document.getElementById('player').classList.remove('on');}
-function saveHighlightVideo(){const c=document.getElementById('plCanvas');
-  if(!c.captureStream||!window.MediaRecorder){toast('이 브라우저는 영상 저장을 지원하지 않아요');return;}
-  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];let mime='video/webm';
-  for(const m of mimes)if(MediaRecorder.isTypeSupported(m)){mime=m;break;}
-  const rec=new MediaRecorder(c.captureStream(30),{mimeType:mime});const chunks=[];
-  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
-  rec.onstop=()=>{const blob=new Blob(chunks,{type:mime});const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=(hlPet&&hlPet.name||'pet')+'_highlight.webm';a.click();
+function saveHighlightVideo(){const c=document.getElementById('plCanvas');if(!c.captureStream||!window.MediaRecorder){toast('이 브라우저는 영상 저장을 지원하지 않아요');return;}
+  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];let mime='video/webm';for(const m of mimes)if(MediaRecorder.isTypeSupported(m)){mime=m;break;}
+  const rec=new MediaRecorder(c.captureStream(30),{mimeType:mime});const chunks=[];rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=()=>{const blob=new Blob(chunks,{type:mime}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=(hlPet&&hlPet.name||'pet')+'_highlight.webm';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),6000);document.getElementById('recHint').textContent='저장됐어요! 🎬';};
-  const dur=Math.min(hlImgs.length,12)*2100+300;rec.start();
-  document.getElementById('recHint').textContent='영상 만드는 중… ('+Math.round(dur/1000)+'초)';
+  const dur=Math.min(hlImgs.length,12)*2100+300;rec.start();document.getElementById('recHint').textContent='영상 만드는 중… ('+Math.round(dur/1000)+'초)';
   setTimeout(()=>{try{rec.stop();}catch(e){}},dur);}
 
 function checkBirthday(){const b=document.getElementById('bdayBanner');if(!b)return;const p=active();
-  if(p&&p.birthMs){const d=new Date(p.birthMs),n=new Date();
-    if(d.getMonth()===n.getMonth()&&d.getDate()===n.getDate()){b.innerHTML='🎂 오늘 '+p.name+' 생일! 카드 만들기 →';b.style.display='block';return;}}
+  if(p&&p.birthMs){const d=new Date(p.birthMs),n=new Date();if(d.getMonth()===n.getMonth()&&d.getDate()===n.getDate()){b.innerHTML='🎂 오늘 '+p.name+' 생일! 카드 만들기 →';b.style.display='block';return;}}
   b.style.display='none';}
 
 /* ---------- init ---------- */
 (async function(){
-  await openDB();applySens(sens);await renderSounds();refreshHeader();
+  await openDB();applySens(sens);syncAuto();await renderSounds();refreshHeader();
   if(pets.length===0)openAdd();
   const ok=await startCamera();
   if(!ok){document.getElementById('loading').innerHTML='카메라 권한이 필요해요.<br>HTTPS나 localhost에서 열어주세요.';return;}
   try{model=await cocoSsd.load({base:'lite_mobilenet_v2'});}
   catch(e){document.getElementById('loading').innerHTML='AI 모델을 못 불러왔어요.<br>인터넷 연결을 확인해 주세요.';return;}
-  document.getElementById('loading').style.display='none';setStatus('우리 아이 찾는 중…');loop();
+  document.getElementById('loading').style.display='none';setStatus(autoOn?'우리 아이 찾는 중…':'버튼을 눌러 촬영');loop();
 })();
 </script>
 </body>
