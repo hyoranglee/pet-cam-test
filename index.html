@@ -53,6 +53,7 @@
        padding:9px 15px;border-radius:999px;font-size:14px;font-family:"Jua";box-shadow:var(--shadow);}
   .snd:active{background:var(--coral);color:#fff;border-color:var(--coral);transform:scale(.95);}
   .snd.rec{color:var(--coral);border-color:var(--coral);}
+  .snd.sel{background:var(--mint);color:#fff;border-color:var(--mint);}
   .snd.recording{background:var(--coral);color:#fff;animation:pulse .8s infinite;}
   @keyframes pulse{50%{opacity:.6;}}
 
@@ -121,8 +122,12 @@
   #light{position:fixed;inset:0;background:rgba(30,20,15,.92);display:none;flex-direction:column;
          align-items:center;justify-content:center;z-index:40;padding:20px;}
   #light.on{display:flex;}
-  #light img{max-width:100%;max-height:72vh;border-radius:18px;}
-  #light .acts{display:flex;gap:12px;margin-top:18px;}
+  #light img{max-width:100%;max-height:64vh;border-radius:18px;}
+  #fxRow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center;}
+  .fx{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;
+      padding:8px 15px;font-family:"Jua";font-size:14px;}
+  .fx.on{background:var(--yellow);border-color:var(--yellow);color:var(--ink);}
+  #light .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
   #light a,#light button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;
          padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
 
@@ -220,11 +225,19 @@
 </div></div>
 
 <!-- Lightbox -->
-<div id="light"><img id="lightImg"><div class="acts">
-  <a id="lightDl" download="pet.jpg">저장</a>
-  <button onclick="deleteCurrent()">삭제</button>
-  <button onclick="closeLight()">닫기</button>
-</div></div>
+<div id="light"><img id="lightImg">
+  <div id="fxRow">
+    <button class="fx on" id="fxOff" onclick="setFx(null,this)">원본</button>
+    <button class="fx" onclick="setFx('standard',this)">✨ 기본</button>
+    <button class="fx" onclick="setFx('darkFur',this)">검은 털</button>
+    <button class="fx" onclick="setFx('lightFur',this)">밝은 털</button>
+  </div>
+  <div class="acts">
+    <a id="lightDl" download="pet.jpg">저장</a>
+    <button id="saveFxBtn" onclick="saveEnhanced()" style="display:none">앨범에 추가</button>
+    <button onclick="deleteCurrent()">삭제</button>
+    <button onclick="closeLight()">닫기</button>
+  </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
@@ -267,17 +280,25 @@ function toggleAdv(){adv.style.display=adv.style.display==='block'?'none':'block
 
 /* ---------- sounds ---------- */
 let actx;const SYN={squeak:[1500,2400,140,'삑삑이'],meow:[600,420,300,'야옹'],bird:[2600,3200,90,'새소리'],bell:[900,1400,200,'초인종'],kiss:[1800,1200,120,'쪽쪽']};
+let selectedSound=null;
 function playSyn(name){actx=actx||new(window.AudioContext||window.webkitAudioContext)();
   const[f1,f2,ms]=SYN[name];const o=actx.createOscillator(),g=actx.createGain();
   o.frequency.setValueAtTime(f1,actx.currentTime);o.frequency.linearRampToValueAtTime(f2,actx.currentTime+ms/1000);
   g.gain.setValueAtTime(.22,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+ms/1000);
   o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+ms/1000);}
+function playSelected(){if(!selectedSound)return;
+  if(selectedSound.kind==='syn')playSyn(selectedSound.name);else new Audio(selectedSound.dataUrl).play();}
+function chooseSound(btn,snd){
+  if(selectedSound&&selectedSound.key===snd.key){selectedSound=null;btn.classList.remove('sel');return;}
+  selectedSound=snd;document.querySelectorAll('.snd').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');playSelected();}
 async function renderSounds(){const row=document.getElementById('sounds');row.innerHTML='';
   Object.keys(SYN).forEach(k=>{const b=document.createElement('button');b.className='snd';b.textContent=SYN[k][3];
-    b.onclick=()=>playSyn(k);row.appendChild(b);});
+    const snd={kind:'syn',name:k,key:'syn:'+k};if(selectedSound&&selectedSound.key===snd.key)b.classList.add('sel');
+    b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
   const voices=await idbAll('voices');
   voices.forEach(v=>{const b=document.createElement('button');b.className='snd';b.textContent='🎵 '+v.name;
-    b.onclick=()=>new Audio(v.dataUrl).play();row.appendChild(b);});
+    const snd={kind:'voice',dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)b.classList.add('sel');
+    b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
   const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';
   rec.onclick=recordVoice;row.appendChild(rec);}
 async function recordVoice(){const btn=document.getElementById('recBtn');
@@ -293,7 +314,8 @@ async function recordVoice(){const btn=document.getElementById('recBtn');
 /* ---------- camera ---------- */
 const video=document.getElementById('video'),overlay=document.getElementById('overlay'),octx=overlay.getContext('2d');
 const statusEl=document.getElementById('status'),lockfill=document.getElementById('lockfill');
-async function startCamera(){for(const c of[{video:{facingMode:{ideal:'environment'}}},{video:true}]){
+async function startCamera(){const hi={width:{ideal:1920},height:{ideal:1080}};
+  for(const c of[{video:{facingMode:{ideal:'environment'},...hi}},{video:{...hi}},{video:true}]){
   try{const s=await navigator.mediaDevices.getUserMedia(c);video.srcObject=s;await video.play();return true;}catch(e){}}return false;}
 
 /* sharpness + motion */
@@ -308,7 +330,7 @@ function motion(){mctx.drawImage(video,0,0,64,64);const d=mctx.getImageData(0,0,
   for(let i=0;i<64*64;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
   if(!prevGray){prevGray=g;return 999;}let diff=0;for(let i=0;i<g.length;i++)diff+=Math.abs(g[i]-prevGray[i]);prevGray=g;return diff/g.length;}
 function grab(){const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);return c;}
-function compress(cv,max=1080,q=.82){const s=Math.min(1,max/Math.max(cv.width,cv.height));const w=Math.round(cv.width*s),h=Math.round(cv.height*s);
+function compress(cv,max=1600,q=.92){const s=Math.min(1,max/Math.max(cv.width,cv.height));const w=Math.round(cv.width*s),h=Math.round(cv.height*s);
   const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(cv,0,0,w,h);return c.toDataURL('image/jpeg',q);}
 
 /* ---------- auto-shutter ---------- */
@@ -348,7 +370,7 @@ async function loop(){
 }
 function finishBurst(){const frames=burst;burst=[];lastShot=Date.now();streakN=0;state='cooldown';lockfill.style.width='0';setStatus('베스트 컷 고르는 중…');
   let best=null,bs=-1;for(const f of frames){const s=sharpness(f);if(s>bs){bs=s;best=f;}}if(best)saveShot(best);}
-function manualShot(){const f=grab();saveShot(f);}
+function manualShot(){playSelected();if(state==='capturing')return;burst=[grab()];state='capturing';setStatus('찰칵! 연사 중');}
 async function saveShot(cv){const dataUrl=compress(cv);const pet=active();if(!pet){openAdd();return;}
   await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl,ts:Date.now()});
   setStatus('앨범에 저장됐어요!');setTimeout(()=>{if(state!=='capturing')setStatus('우리 아이 찾는 중…');},1200);
@@ -364,11 +386,39 @@ async function renderAlbum(){const pet=active();const grid=document.getElementBy
   const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
   ph.forEach(p=>{const img=document.createElement('img');img.src=p.dataUrl;img.onclick=()=>openLight(p);grid.appendChild(img);});}
 
-/* lightbox */
-let curPhoto=null;
-function openLight(p){curPhoto=p;lightImg.src=p.dataUrl;lightDl.href=p.dataUrl;document.getElementById('light').classList.add('on');}
+/* lightbox + beautify filter */
+let curPhoto=null,curEnhancedUrl=null;
+const PRESETS={standard:{shadow:.5,contrast:.12,warmth:.04,sat:.20},
+               darkFur:{shadow:.72,contrast:.14,warmth:.05,sat:.22},
+               lightFur:{shadow:.30,contrast:.10,warmth:.03,sat:.15}};
+function openLight(p){curPhoto=p;curEnhancedUrl=null;lightImg.src=p.dataUrl;lightDl.href=p.dataUrl;lightDl.download='pet.jpg';
+  document.querySelectorAll('.fx').forEach(b=>b.classList.remove('on'));document.getElementById('fxOff').classList.add('on');
+  document.getElementById('saveFxBtn').style.display='none';document.getElementById('light').classList.add('on');}
 function closeLight(){document.getElementById('light').classList.remove('on');}
 async function deleteCurrent(){if(curPhoto){await idbDel('photos',curPhoto.id);closeLight();renderAlbum();}}
+function setFx(name,btn){document.querySelectorAll('.fx').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  if(!name){curEnhancedUrl=null;lightImg.src=curPhoto.dataUrl;lightDl.href=curPhoto.dataUrl;
+    document.getElementById('saveFxBtn').style.display='none';return;}
+  lightImg.style.opacity=.5;
+  enhance(curPhoto.dataUrl,PRESETS[name]).then(url=>{curEnhancedUrl=url;lightImg.src=url;lightImg.style.opacity=1;
+    lightDl.href=url;lightDl.download='pet_보정.jpg';document.getElementById('saveFxBtn').style.display='inline-block';});}
+const clamp=v=>v<0?0:v>1?1:v;
+const lift=(v,a)=>v+a*(Math.pow(v,.45)-v);          // gentle shadow lift
+const scurve=(v,c)=>clamp(v+c*Math.sin((v-.5)*Math.PI)); // soft S contrast
+function enhance(srcUrl,p){return new Promise(res=>{const img=new Image();img.onload=()=>{
+  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+  const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const im=ctx.getImageData(0,0,c.width,c.height);const d=im.data;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
+    r=lift(r,p.shadow);g=lift(g,p.shadow);b=lift(b,p.shadow);
+    r=scurve(r,p.contrast);g=scurve(g,p.contrast);b=scurve(b,p.contrast);
+    r=clamp(r+p.warmth);b=clamp(b-p.warmth*.7);
+    const lum=.299*r+.587*g+.114*b;
+    r=clamp(lum+(r-lum)*(1+p.sat));g=clamp(lum+(g-lum)*(1+p.sat));b=clamp(lum+(b-lum)*(1+p.sat));
+    d[i]=r*255;d[i+1]=g*255;d[i+2]=b*255;}
+  ctx.putImageData(im,0,0);res(c.toDataURL('image/jpeg',.92));};img.src=srcUrl;});}
+async function saveEnhanced(){if(!curEnhancedUrl)return;const pet=active();
+  await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl:curEnhancedUrl,ts:Date.now()});closeLight();renderAlbum();}
 
 /* pet header + sheets */
 const AV={dog:'🐶',cat:'🐱',other:'🐾'};
