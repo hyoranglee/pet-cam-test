@@ -71,7 +71,19 @@
   .petface.on .fn{color:var(--coral);}
   .petface.add .fc{background:#FFF1ED;color:var(--coral);border:2px dashed var(--coral);font-size:28px;}
   #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-  #grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);}
+  #grid .gcell{position:relative;}
+  #grid .gcell img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);display:block;}
+  #grid .gcheck{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;display:none;
+                align-items:center;justify-content:center;font-size:15px;}
+  #grid.selecting .gcheck{display:flex;background:rgba(255,255,255,.7);color:transparent;border:2px solid #fff;}
+  #grid .gcell.sel img{outline:3px solid var(--coral);outline-offset:-3px;}
+  #grid .gcell.sel .gcheck{background:#fff;color:var(--coral);border-color:var(--coral);}
+  #selBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;
+          display:none;align-items:center;gap:10px;background:var(--card);border-radius:18px;padding:12px 16px;
+          box-shadow:0 6px 24px rgba(120,80,50,.25);z-index:50;}
+  #selCount{font-family:"Jua";font-size:15px;}
+  #selBar button{border:2px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:9px 16px;font-family:"Jua";font-size:14px;}
+  #selDel{background:var(--coral)!important;color:#fff!important;border-color:var(--coral)!important;}
   #empty{text-align:center;color:var(--muted);padding:60px 20px;}#empty .big{font-size:48px;}#empty p{font-family:"Jua";font-size:16px;margin:10px 0 0;}
   .crcard{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--line);border-radius:20px;
           padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);width:100%;text-align:left;}
@@ -199,6 +211,14 @@
   <button class="addbtn" onclick="openAdd()">+ 새로운 아이 등록</button>
 </div></div>
 
+<!-- Selection bar (album multi-delete) -->
+<div id="selBar">
+  <span id="selCount">0개 선택</span>
+  <span style="flex:1"></span>
+  <button onclick="exitSelect()">취소</button>
+  <button id="selDel" onclick="deleteSelected()">삭제</button>
+</div>
+
 <!-- Add pet -->
 <div class="sheet" id="addSheet"><div class="sheetbox">
   <h2>반려동물 등록 🐾</h2>
@@ -320,11 +340,16 @@ function toggleAuto(){autoOn=!autoOn;localStorage.setItem('auto',autoOn?'1':'0')
 let actx=null;
 function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
   if(actx&&actx.state==='suspended')actx.resume();return actx;}
-const SYN={squeak:[1500,2400,140,'삑삑이'],meow:[600,420,300,'야옹'],bird:[2600,3200,90,'새소리'],bell:[900,1400,200,'초인종'],kiss:[1800,1200,120,'쪽쪽']};
-function playSyn(name){const a=ensureAudio();if(!a)return;const[f1,f2,ms]=SYN[name];
-  const o=a.createOscillator(),g=a.createGain();o.frequency.setValueAtTime(f1,a.currentTime);
-  o.frequency.linearRampToValueAtTime(f2,a.currentTime+ms/1000);g.gain.setValueAtTime(.22,a.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+ms/1000);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+ms/1000);}
+const SYN={squeak:[1500,2400,160,'삑삑이'],meow:[640,440,320,'야옹'],bird:[2600,3300,180,'새소리'],bell:[900,1500,240,'초인종'],kiss:[1900,1200,150,'쪽쪽']};
+const synthBuf={};
+function getSynthBuf(name){const a=ensureAudio();if(!a)return null;
+  if(synthBuf[name]&&synthBuf[name].sr===a.sampleRate)return synthBuf[name].buf;
+  const[f1,f2,ms]=SYN[name],dur=ms/1000,sr=a.sampleRate,len=Math.max(1,Math.ceil(sr*dur)),buf=a.createBuffer(1,len,sr),ch=buf.getChannelData(0);
+  let ph=0;for(let i=0;i<len;i++){const frac=i/len,f=f1+(f2-f1)*frac;ph+=2*Math.PI*f/sr;
+    const env=Math.exp(-3.0*frac)*(frac<0.02?frac/0.02:1);ch[i]=Math.sin(ph)*0.5*env;}
+  synthBuf[name]={buf,sr:a.sampleRate};return buf;}
+function playSyn(name){const a=ensureAudio();if(!a)return;const b=getSynthBuf(name);if(!b)return;
+  const s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start();}
 const voiceBuf={};
 async function playVoice(v){const a=ensureAudio();if(!a)return;
   if(!voiceBuf[v.id]){try{const ab=await(await fetch(v.dataUrl)).arrayBuffer();voiceBuf[v.id]=await a.decodeAudioData(ab);}catch(e){new Audio(v.dataUrl).play();return;}}
@@ -349,21 +374,27 @@ async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))ret
 let mediaRec=null,recChunks=[];
 async function recordVoice(){const btn=document.getElementById('recBtn');
   if(mediaRec&&mediaRec.state==='recording'){mediaRec.stop();return;}
-  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});mediaRec=new MediaRecorder(s);recChunks=[];
+  const stream=video.srcObject;const at=stream&&stream.getAudioTracks&&stream.getAudioTracks()[0];
+  if(!at){toast('마이크를 못 써요. 카메라 권한에서 마이크도 허용해 주세요');return;}
+  try{at.enabled=true;mediaRec=new MediaRecorder(new MediaStream([at]));recChunks=[];
     mediaRec.ondataavailable=e=>e.data.size&&recChunks.push(e.data);
-    mediaRec.onstop=async()=>{s.getTracks().forEach(t=>t.stop());const blob=new Blob(recChunks,{type:mediaRec.mimeType});
+    mediaRec.onstop=async()=>{at.enabled=false;const blob=new Blob(recChunks,{type:mediaRec.mimeType});
       const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});
       const n=(await idbAll('voices')).length+1;await idbPut('voices',{id:'v'+Date.now(),name:'목소리'+n,dataUrl:url});mediaRec=null;renderSounds();};
     btn.classList.add('recording');btn.textContent='■ 정지 (탭)';mediaRec.start();
     setTimeout(()=>{if(mediaRec&&mediaRec.state==='recording')mediaRec.stop();},8000);}
-  catch(e){toast('마이크 권한이 필요해요');}}
+  catch(e){at.enabled=false;mediaRec=null;toast('녹음을 시작하지 못했어요');}}
 
 /* ---------- camera ---------- */
 const video=document.getElementById('video'),overlay=document.getElementById('overlay'),octx=overlay.getContext('2d');
 const statusEl=document.getElementById('status'),lockfill=document.getElementById('lockfill');
 async function startCamera(){const hi={width:{ideal:1920},height:{ideal:1080}};
-  for(const c of[{video:{facingMode:{ideal:'environment'},...hi}},{video:{...hi}},{video:true}]){
-  try{const s=await navigator.mediaDevices.getUserMedia(c);video.srcObject=s;await video.play();return true;}catch(e){}}return false;}
+  const tries=[{video:{facingMode:{ideal:'environment'},...hi},audio:true},{video:{...hi},audio:true},
+               {video:{facingMode:{ideal:'environment'},...hi}},{video:{...hi}},{video:true}];
+  for(const c of tries){
+  try{const s=await navigator.mediaDevices.getUserMedia(c);video.srcObject=s;video.muted=true;await video.play();
+    const at=s.getAudioTracks&&s.getAudioTracks()[0];if(at)at.enabled=false; // mic off until recording
+    return true;}catch(e){}}return false;}
 const sc=document.createElement('canvas');sc.width=sc.height=160;const sctx=sc.getContext('2d',{willReadFrequently:true});
 function sharpness(cv){sctx.drawImage(cv,0,0,160,160);const d=sctx.getImageData(0,0,160,160).data;const g=new Float32Array(160*160);
   for(let i=0;i<160*160;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
@@ -438,16 +469,40 @@ function showTab(t){curTab=t;document.getElementById('camera').style.display=t==
   document.getElementById('album').style.display=t==='album'?'block':'none';
   document.getElementById('create').style.display=t==='create'?'block':'none';
   tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');tabCreate.classList.toggle('on',t==='create');
+  if(t!=='album'&&typeof exitSelect==='function')exitSelect();
   if(t==='album')renderAlbum();}
 function renderPetStrip(){const strip=document.getElementById('petStrip');strip.innerHTML='';
   [...pets].reverse().forEach(p=>{const d=document.createElement('button');d.className='petface'+(p.id===activeId?' on':'');
     const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${emojiFor(p)}</span>`;
-    d.innerHTML=fc+`<span class="fn">${p.name}</span>`;d.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();renderAlbum();};strip.appendChild(d);});
+    d.innerHTML=fc+`<span class="fn">${p.name}</span>`;d.onclick=()=>{exitSelect();activeId=p.id;savePets();refreshHeader();renderPetStrip();renderAlbum();};strip.appendChild(d);});
   const add=document.createElement('button');add.className='petface add';add.innerHTML='<span class="fc">+</span><span class="fn">추가</span>';add.onclick=openAdd;strip.appendChild(add);}
 async function renderAlbum(){renderPetStrip();const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
-  if(!pet){grid.innerHTML='';empty.style.display='block';return;}
+  if(!pet){grid.innerHTML='';empty.style.display='block';exitSelect();return;}
   const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
-  ph.forEach(p=>{const img=document.createElement('img');img.src=p.dataUrl;img.onclick=()=>openLight(p);grid.appendChild(img);});}
+  ph.forEach(p=>{const cell=document.createElement('div');cell.className='gcell';cell.dataset.id=p.id;
+    cell.innerHTML=`<img src="${p.dataUrl}"><span class="gcheck">✓</span>`;attachPhotoHandlers(cell,p);grid.appendChild(cell);});
+  applySelectUI();}
+
+/* multi-select delete */
+let selectMode=false,selected=new Set();
+function attachPhotoHandlers(cell,p){let timer=null,longFired=false,sx=0,sy=0;
+  const start=e=>{longFired=false;sx=e.clientX;sy=e.clientY;if(timer)clearTimeout(timer);
+    timer=setTimeout(()=>{longFired=true;if(navigator.vibrate)navigator.vibrate(20);enterSelect(p.id);},420);};
+  const move=e=>{if(Math.hypot(e.clientX-sx,e.clientY-sy)>10&&timer){clearTimeout(timer);timer=null;}};
+  const stop=()=>{if(timer){clearTimeout(timer);timer=null;}};
+  cell.addEventListener('pointerdown',start);cell.addEventListener('pointermove',move);
+  cell.addEventListener('pointerup',stop);cell.addEventListener('pointercancel',stop);cell.addEventListener('pointerleave',stop);
+  cell.onclick=()=>{if(longFired){longFired=false;return;}if(selectMode)toggleSelect(p.id);else openLight(p);};}
+function enterSelect(id){selectMode=true;selected=new Set([id]);applySelectUI();}
+function toggleSelect(id){if(selected.has(id))selected.delete(id);else selected.add(id);if(!selected.size){exitSelect();return;}applySelectUI();}
+function exitSelect(){selectMode=false;selected=new Set();applySelectUI();}
+function applySelectUI(){const grid=document.getElementById('grid');if(!grid)return;
+  grid.classList.toggle('selecting',selectMode);
+  grid.querySelectorAll('.gcell').forEach(c=>c.classList.toggle('sel',selected.has(c.dataset.id)));
+  document.getElementById('selBar').style.display=selectMode?'flex':'none';
+  document.getElementById('selCount').textContent=selected.size+'개 선택';}
+async function deleteSelected(){if(!selected.size)return;if(!confirm(selected.size+'장을 삭제할까요?'))return;
+  for(const id of selected)await idbDel('photos',id);exitSelect();renderAlbum();}
 
 /* lightbox + filter */
 let curPhoto=null,curEnhancedUrl=null;
@@ -492,7 +547,7 @@ function openPets(){const list=document.getElementById('petList');list.innerHTML
     const av=p.avatarUrl?`<span class="avatar" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="avatar">${emojiFor(p)}</span>`;
     r.innerHTML=`${av}<div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${typeLabel(p)} · ${ageText(p)}</div></div>`+
       `${p.id===activeId?'<span style="color:var(--coral);margin-right:4px">✓</span>':''}<span class="petdel" title="삭제">🗑️</span>`;
-    r.onclick=()=>{activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();};
+    r.onclick=()=>{exitSelect();activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();};
     r.querySelector('.petdel').onclick=e=>{e.stopPropagation();deletePet(p.id);};list.appendChild(r);});
   document.getElementById('petSheet').classList.add('on');}
 async function deletePet(id){const p=pets.find(x=>x.id===id);if(!p)return;
