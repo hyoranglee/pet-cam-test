@@ -46,6 +46,8 @@
        border-radius:999px;font-size:14px;font-family:"Jua";box-shadow:var(--shadow);}
   .snd:active{transform:scale(.95);}
   .snd.rec{color:var(--coral);border-color:var(--coral);}
+  .snd.addsnd{border:2px dashed var(--coral);color:var(--coral);background:#fff;}
+  .vdelbtn{border-color:#f0c9c0!important;padding:8px 10px!important;}
   .snd.sel{background:var(--mint);color:#fff;border-color:var(--mint);}
   .snd.recording{background:var(--coral);color:#fff;animation:pulse .8s infinite;}
   @keyframes pulse{50%{opacity:.6;}}
@@ -120,6 +122,11 @@
   .sw-color{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);}
   .sw-color.on{box-shadow:0 0 0 3px var(--coral);}
   .edpanel input[type=range]{width:100%;accent-color:var(--coral);}
+  #edItemBar{display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--card);border-top:1px solid var(--line);}
+  #edItemBar .ibl{font-family:"Jua";font-size:13px;color:var(--muted);margin-right:auto;}
+  #edItemBar button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-family:"Jua";font-size:13px;color:var(--ink);}
+  #edItemBar .del{border-color:#f0c9c0;color:var(--coral);}
+  .emojibtn{font-size:22px;padding:6px 12px;}
   .edpanel .tinput{width:100%;border:2px solid var(--line);border-radius:14px;padding:11px 14px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
   #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
   #picker.on{display:flex;}
@@ -304,6 +311,12 @@
 <div id="editor">
   <div class="edtop"><button onclick="closeEditor()">취소</button><span class="ti">꾸미기 ✨</span><button class="save" onclick="saveEditor()">완료</button></div>
   <div class="edcanvas"><canvas id="edCanvas" width="1080" height="1080"></canvas></div>
+  <div id="edItemBar" style="display:none;">
+    <span class="ibl">선택한 항목</span>
+    <button onclick="edItemSize(-16)">크기 −</button>
+    <button onclick="edItemSize(16)">크기 ＋</button>
+    <button class="del" onclick="edItemDelete()">🗑️ 삭제</button>
+  </div>
   <div class="edtabs">
     <button class="edtab on" data-p="photo" onclick="edTab('photo')">📷 사진</button>
     <button class="edtab" data-p="frame" onclick="edTab('frame')">🎨 프레임</button>
@@ -322,6 +335,13 @@
     <input type="range" id="cropZoom" min="100" max="320" value="100" oninput="cropZoomInput(this.value)">
   </div>
 </div>
+
+<!-- Sound library sheet -->
+<div class="sheet" id="soundSheet"><div class="sheetbox">
+  <h2>소리 추가하기 🔊</h2>
+  <div id="soundList"></div>
+  <button class="bigbtn" style="margin-top:14px" onclick="closeSoundSheet()">완료</button>
+</div></div>
 
 <!-- Player -->
 <div id="player">
@@ -378,7 +398,7 @@ function toggleAuto(){autoOn=!autoOn;localStorage.setItem('auto',autoOn?'1':'0')
 let actx=null;
 function ensureAudio(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
   if(actx&&actx.state==='suspended')actx.resume();return actx;}
-const SYN={squeak:[1500,2400,160,'삑삑이'],meow:[640,440,320,'야옹'],bird:[2600,3300,180,'새소리'],bell:[900,1500,240,'초인종'],kiss:[1900,1200,150,'쪽쪽']};
+const SYN={squeak:[1500,2400,160,'삑삑이'],meow:[640,440,320,'야옹'],bird:[2600,3300,180,'새소리'],bell:[900,1500,240,'초인종'],kiss:[1900,1200,150,'쪽쪽'],whistle:[1700,2700,280,'휘파람'],chirp:[3000,2300,120,'짹짹'],toy:[700,1150,180,'딸랑이'],click:[1200,1200,70,'딱딱'],boing:[380,950,240,'통통']};
 const synthBuf={};
 function getSynthBuf(name){const a=ensureAudio();if(!a)return null;
   if(synthBuf[name]&&synthBuf[name].sr===a.sampleRate)return synthBuf[name].buf;
@@ -392,34 +412,56 @@ const voiceBuf={};
 async function playVoice(v){const a=ensureAudio();if(!a)return;
   if(!voiceBuf[v.id]){try{const ab=await(await fetch(v.dataUrl)).arrayBuffer();voiceBuf[v.id]=await a.decodeAudioData(ab);}catch(e){new Audio(v.dataUrl).play();return;}}
   const s=a.createBufferSource();s.buffer=voiceBuf[v.id];s.connect(a.destination);s.start();}
-let selectedSound=null;
-function playSelected(){if(!selectedSound)return;selectedSound.kind==='syn'?playSyn(selectedSound.name):playVoice(selectedSound);}
+let selectedSound=null,voicesCache=[];
+let addedSounds=JSON.parse(localStorage.getItem('added')||'null')||['syn:squeak','syn:meow','syn:bird'];
+const saveAdded=()=>localStorage.setItem('added',JSON.stringify(addedSounds));
+function resumeCam(){const v=document.getElementById('video');if(v&&v.srcObject&&v.paused)v.play().catch(()=>{});}
+async function refreshVoices(){voicesCache=await idbAll('voices');}
+function sndForKey(key){if(key.indexOf('syn:')===0){const n=key.slice(4);return SYN[n]?{kind:'syn',name:n,key,label:SYN[n][3]}:null;}
+  const id=key.slice(6),v=voicesCache.find(x=>x.id===id);return v?{kind:'voice',id,dataUrl:v.dataUrl,key,label:'🎵 '+v.name}:null;}
+function previewSnd(s){ensureAudio();if(s)s.kind==='syn'?playSyn(s.name):playVoice(s);}
+function playSelected(){previewSnd(selectedSound);}
 function chooseSound(btn,snd){ensureAudio();
-  if(selectedSound&&selectedSound.key===snd.key){selectedSound=null;btn.classList.remove('sel');return;}
-  selectedSound=snd;document.querySelectorAll('.snd').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');playSelected();}
-async function renderSounds(){const row=document.getElementById('sounds');row.innerHTML='';
-  Object.keys(SYN).forEach(k=>{const b=document.createElement('button');b.className='snd';b.textContent=SYN[k][3];
-    const snd={kind:'syn',name:k,key:'syn:'+k};if(selectedSound&&selectedSound.key===snd.key)b.classList.add('sel');
-    b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
-  const voices=await idbAll('voices');
-  voices.forEach(v=>{const wrap=document.createElement('div');wrap.className='snd voicechip';
-    const snd={kind:'voice',id:v.id,dataUrl:v.dataUrl,key:'voice:'+v.id};if(selectedSound&&selectedSound.key===snd.key)wrap.classList.add('sel');
-    const lbl=document.createElement('span');lbl.textContent='🎵 '+v.name;lbl.onclick=()=>chooseSound(wrap,snd);
-    const del=document.createElement('span');del.className='vdel';del.textContent='✕';del.onclick=e=>{e.stopPropagation();deleteVoice(v.id);};
-    wrap.appendChild(lbl);wrap.appendChild(del);row.appendChild(wrap);});
-  const rec=document.createElement('button');rec.className='snd rec';rec.id='recBtn';rec.textContent='🎤 내 목소리';rec.onclick=recordVoice;row.appendChild(rec);}
-async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))return;if(selectedSound&&selectedSound.key==='voice:'+id)selectedSound=null;delete voiceBuf[id];await idbDel('voices',id);renderSounds();}
+  if(selectedSound&&selectedSound.key===snd.key){selectedSound=null;btn&&btn.classList.remove('sel');return;}
+  selectedSound=snd;document.querySelectorAll('#sounds .snd').forEach(b=>b.classList.remove('sel'));btn&&btn.classList.add('sel');playSelected();}
+async function renderSounds(){await refreshVoices();const row=document.getElementById('sounds');if(!row)return;row.innerHTML='';
+  addedSounds=addedSounds.filter(k=>sndForKey(k));saveAdded();
+  addedSounds.forEach(k=>{const snd=sndForKey(k);const b=document.createElement('button');b.className='snd'+(selectedSound&&selectedSound.key===k?' sel':'');
+    b.textContent=snd.label;b.onclick=()=>chooseSound(b,snd);row.appendChild(b);});
+  const add=document.createElement('button');add.className='snd addsnd';add.textContent='＋ 소리';add.onclick=openSoundSheet;row.appendChild(add);}
+
+async function openSoundSheet(){await refreshVoices();renderSoundSheet();document.getElementById('soundSheet').classList.add('on');}
+function closeSoundSheet(){document.getElementById('soundSheet').classList.remove('on');resumeCam();}
+function renderSoundSheet(){const box=document.getElementById('soundList');let h='<p class="lab">기본 소리 — 탭하면 추가/빼기 (소리도 들려요)</p><div class="edrow">';
+  Object.keys(SYN).forEach(k=>{const key='syn:'+k,on=addedSounds.includes(key);
+    h+=`<button class="chip ${on?'on':''}" onclick="toggleAdd('${key}')">${SYN[k][3]} ${on?'✓':'＋'}</button>`;});
+  h+='</div><p class="lab" style="margin-top:14px">내 목소리</p>';
+  if(voicesCache.length)voicesCache.forEach(v=>{const key='voice:'+v.id,on=addedSounds.includes(key);
+    h+=`<div class="petrow"><span style="flex:1">🎵 ${v.name}</span>
+      <button class="chip ${on?'on':''}" onclick="toggleAdd('${key}')">${on?'추가됨 ✓':'추가 ＋'}</button>
+      <button class="chip vdelbtn" onclick="deleteVoice('${v.id}')">🗑️</button></div>`;});
+  else h+='<p class="hint" style="margin:4px 0">아직 녹음이 없어요.</p>';
+  h+='<button class="addbtn" id="recBtn" style="margin-top:12px" onclick="recordVoice()">🎤 새 목소리 녹음</button>';
+  box.innerHTML=h;}
+function toggleAdd(key){const i=addedSounds.indexOf(key);
+  if(i>=0)addedSounds.splice(i,1);else{addedSounds.push(key);previewSnd(sndForKey(key));}
+  saveAdded();renderSoundSheet();renderSounds();}
+async function deleteVoice(id){if(!confirm('이 녹음을 삭제할까요?'))return;
+  if(selectedSound&&selectedSound.key==='voice:'+id)selectedSound=null;
+  const k='voice:'+id,i=addedSounds.indexOf(k);if(i>=0)addedSounds.splice(i,1);saveAdded();
+  delete voiceBuf[id];await idbDel('voices',id);await refreshVoices();renderSoundSheet();renderSounds();resumeCam();}
 let mediaRec=null,recChunks=[];
 async function recordVoice(){const btn=document.getElementById('recBtn');
   if(mediaRec&&mediaRec.state==='recording'){mediaRec.stop();return;}
-  const stream=video.srcObject;const at=stream&&stream.getAudioTracks&&stream.getAudioTracks()[0];
+  const stream=video.srcObject,at=stream&&stream.getAudioTracks&&stream.getAudioTracks()[0];
   if(!at){toast('마이크를 못 써요. 카메라 권한에서 마이크도 허용해 주세요');return;}
   try{at.enabled=true;mediaRec=new MediaRecorder(new MediaStream([at]));recChunks=[];
     mediaRec.ondataavailable=e=>e.data.size&&recChunks.push(e.data);
     mediaRec.onstop=async()=>{at.enabled=false;const blob=new Blob(recChunks,{type:mediaRec.mimeType});
       const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});
-      const n=(await idbAll('voices')).length+1;await idbPut('voices',{id:'v'+Date.now(),name:'목소리'+n,dataUrl:url});mediaRec=null;renderSounds();};
-    btn.classList.add('recording');btn.textContent='■ 정지 (탭)';mediaRec.start();
+      const id='v'+Date.now(),n=(await idbAll('voices')).length+1;await idbPut('voices',{id,name:'목소리'+n,dataUrl:url});
+      addedSounds.push('voice:'+id);saveAdded();mediaRec=null;await refreshVoices();renderSoundSheet();renderSounds();};
+    btn&&(btn.classList.add('recording'),btn.textContent='■ 정지 (탭)');mediaRec.start();
     setTimeout(()=>{if(mediaRec&&mediaRec.state==='recording')mediaRec.stop();},8000);}
   catch(e){at.enabled=false;mediaRec=null;toast('녹음을 시작하지 못했어요');}}
 
@@ -457,7 +499,7 @@ function drawBoxes(preds,locked){overlay.width=video.videoWidth;overlay.height=v
     octx.strokeStyle=(locked===p)?'#5FC9A6':'rgba(255,255,255,.55)';octx.lineWidth=4;octx.beginPath();octx.roundRect(x,y,w,h,16);octx.stroke();}}
 function clearOverlay(){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);}
 function setStatus(t){statusEl.textContent=t;}
-function anyModalOpen(){return['light','result','player','picker','petSheet','addSheet'].some(id=>document.getElementById(id).classList.contains('on'));}
+function anyModalOpen(){return['light','result','player','picker','petSheet','addSheet','soundSheet','editor','cropper'].some(id=>{const el=document.getElementById(id);return el&&el.classList.contains('on');});}
 
 async function loop(){
   if(model&&video.readyState>=2){
@@ -651,12 +693,11 @@ function pkConfirm(){if(pk.sel.length<pk.min)return;const chosen=pk.sel.map(id=>
 
 /* ---------- create tools ---------- */
 /* shared: place image into a box using a normalized transform {scale,nx,ny} (resolution-independent) */
-function placeImageN(x,img,bx,by,bw,bh,tf,clip,bg){tf=tf||{scale:1,nx:0,ny:0};
-  const base=Math.min(bw/img.width,bh/img.height),S=base*(tf.scale||1),dw=img.width*S,dh=img.height*S;
+function placeImageN(x,img,bx,by,bw,bh,tf,clip){tf=tf||{scale:1,nx:0,ny:0};
+  const base=Math.max(bw/img.width,bh/img.height),S=base*(tf.scale||1),dw=img.width*S,dh=img.height*S;
   const ox=(tf.nx||0)*Math.max(0,(dw-bw)/2),oy=(tf.ny||0)*Math.max(0,(dh-bh)/2);
   const dx=bx+(bw-dw)/2+ox,dy=by+(bh-dh)/2+oy;
   x.save();if(clip==='circle'){x.beginPath();x.arc(bx+bw/2,by+bh/2,Math.min(bw,bh)/2,0,7);x.clip();}else{rrect(x,bx,by,bw,bh,clip||0);x.clip();}
-  if(bg){x.fillStyle=bg;x.fillRect(bx,by,bw,bh);}
   x.drawImage(img,dx,dy,dw,dh);x.restore();}
 
 /* ---------- per-cell cropper ---------- */
@@ -681,7 +722,7 @@ function wireCrop(){if(crop._wired)return;crop._wired=true;let drag=false,lx=0,l
   const pt=e=>{const r=cropCanvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(cropCanvas.width/r.width),y:(e.clientY-r.top)*(cropCanvas.height/r.height)};};
   cropCanvas.addEventListener('pointerdown',e=>{drag=true;const p=pt(e);lx=p.x;ly=p.y;cropCanvas.setPointerCapture(e.pointerId);cropCanvas.style.cursor='grabbing';});
   cropCanvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pt(e),tf=crop.tf[crop.idx],bw=cropCanvas.width,bh=cropCanvas.height,img=crop.img;
-    const base=Math.min(bw/img.width,bh/img.height),S=base*tf.scale,dw=img.width*S,dh=img.height*S;
+    const base=Math.max(bw/img.width,bh/img.height),S=base*tf.scale,dw=img.width*S,dh=img.height*S;
     if(dw>bw)tf.nx=Math.max(-1,Math.min(1,tf.nx+(p.x-lx)/((dw-bw)/2)));
     if(dh>bh)tf.ny=Math.max(-1,Math.min(1,tf.ny+(p.y-ly)/((dh-bh)/2)));lx=p.x;ly=p.y;drawCrop();});
   const end=()=>{drag=false;cropCanvas.style.cursor='grab';};cropCanvas.addEventListener('pointerup',end);cropCanvas.addEventListener('pointercancel',end);}
@@ -727,24 +768,31 @@ const FRAMES={cream:{bg:'#FFF6EF',pad:90,border:16,line:'#fff'},white:{bg:'#FFFF
 const STK={none:[],paws:['🐾'],hearts:['💕','💗','❤️'],stars:['⭐','🌟','✨'],party:['🎉','🎂','🎈','⭐'],
   flowers:['🌸','🌼','🌷'],music:['🎵','🎶'],bones:['🦴','🐾'],snow:['❄️','⛄','✨']};
 const TEXTCOLORS=['#FF7E67','#5FC9A6','#FFC861','#5A463B','#FFFFFF','#ED93B1'];
-const ed={pet:null,img:null,scale:1,ox:0,oy:0,frame:'cream',sticker:'paws',textStyle:'none',text:'',color:'#FF7E67'};
-let edCanvas=null,edWired=false;
+const ed={pet:null,img:null,scale:1,ox:0,oy:0,frame:'cream',items:[],sel:-1};
+const STKSET=['🐾','💕','💗','❤️','⭐','🌟','✨','🎉','🎂','🎈','🌸','🌼','🌷','🎵','🎶','🦴','❄️','⛄','😍','🥰','👑','🌈','☀️','🍖','🐶','🐱','🐹','🐢'];
+let edCanvas=null,edWired=false,curEdTab='photo';
 
 async function makeSticker(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
   openPicker({photos:ph,min:1,max:1,title:'꾸밀 사진을 골라요',cb:async s=>{await openEditor(p,s[0].dataUrl);}});}
 async function openEditor(pet,url){await ensureFont();ed.pet=pet;ed.img=await loadImg(url);
-  ed.scale=1;ed.ox=0;ed.oy=0;ed.frame='cream';ed.sticker='paws';ed.textStyle='none';ed.text='';ed.color='#FF7E67';
-  edCanvas=document.getElementById('edCanvas');wireEditor();document.getElementById('editor').classList.add('on');edTab('photo');drawEditor();}
+  ed.scale=1;ed.ox=0;ed.oy=0;ed.frame='cream';ed.items=[];ed.sel=-1;
+  edCanvas=document.getElementById('edCanvas');wireEditor();document.getElementById('editor').classList.add('on');updateItemBar();edTab('photo');drawEditor();}
 function closeEditor(){document.getElementById('editor').classList.remove('on');}
-function wireEditor(){if(edWired)return;edWired=true;let drag=false,lx=0,ly=0;
+
+function wireEditor(){if(edWired)return;edWired=true;let mode=null,lx=0,ly=0,gx=0,gy=0;
   const pt=e=>{const r=edCanvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(1080/r.width),y:(e.clientY-r.top)*(1080/r.height)};};
-  edCanvas.addEventListener('pointerdown',e=>{drag=true;const p=pt(e);lx=p.x;ly=p.y;edCanvas.setPointerCapture(e.pointerId);edCanvas.style.cursor='grabbing';});
-  edCanvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pt(e);ed.ox+=p.x-lx;ed.oy+=p.y-ly;lx=p.x;ly=p.y;drawEditor();});
-  const end=()=>{drag=false;edCanvas.style.cursor='grab';};
-  edCanvas.addEventListener('pointerup',end);edCanvas.addEventListener('pointercancel',end);}
+  edCanvas.addEventListener('pointerdown',e=>{const p=pt(e);edCanvas.setPointerCapture(e.pointerId);lx=p.x;ly=p.y;
+    if(ed.sel>=0&&ed.items[ed.sel]&&ed.items[ed.sel]._del){const d=ed.items[ed.sel]._del;if(Math.hypot(p.x-d.x,p.y-d.y)<=d.r){edItemDelete();mode=null;return;}}
+    const h=edHit(p);
+    if(h>=0){ed.sel=h;const it=ed.items[h];gx=p.x-it.x;gy=p.y-it.y;mode='item';}else{ed.sel=-1;mode='photo';}
+    updateItemBar();drawEditor();});
+  edCanvas.addEventListener('pointermove',e=>{if(!mode)return;const p=pt(e);
+    if(mode==='item'){const it=ed.items[ed.sel];it.x=p.x-gx;it.y=p.y-gy;}else{ed.ox+=p.x-lx;ed.oy+=p.y-ly;}lx=p.x;ly=p.y;drawEditor();});
+  const end=()=>{mode=null;};edCanvas.addEventListener('pointerup',end);edCanvas.addEventListener('pointercancel',end);}
+function edHit(p){for(let i=ed.items.length-1;i>=0;i--){const bb=ed.items[i]._bb;if(bb&&p.x>=bb.x-14&&p.x<=bb.x+bb.w+14&&p.y>=bb.y-14&&p.y<=bb.y+bb.h+14)return i;}return -1;}
 
 function drawEditor(){if(!edCanvas)return;const x=edCanvas.getContext('2d'),S=1080,F=FRAMES[ed.frame];
-  x.fillStyle=F.bg;x.fillRect(0,0,S,S);
+  x.clearRect(0,0,S,S);x.fillStyle=F.bg;x.fillRect(0,0,S,S);
   const bx=F.pad,by=F.pad,bw=S-2*F.pad,bh=S-2*F.pad;
   const img=ed.img,base=Math.max(bw/img.width,bh/img.height),s=base*ed.scale,dw=img.width*s,dh=img.height*s;
   let dx=bx+(bw-dw)/2+ed.ox,dy=by+(bh-dh)/2+ed.oy;
@@ -752,41 +800,56 @@ function drawEditor(){if(!edCanvas)return;const x=edCanvas.getContext('2d'),S=10
   ed.ox=dx-(bx+(bw-dw)/2);ed.oy=dy-(by+(bh-dh)/2);
   x.save();rrect(x,bx,by,bw,bh,F.pad?28:0);x.clip();x.drawImage(img,dx,dy,dw,dh);x.restore();
   if(F.border){x.lineWidth=F.border;x.strokeStyle=F.line;rrect(x,bx,by,bw,bh,28);x.stroke();}
-  if(ed.sticker!=='none')scatter(x,S,STK[ed.sticker]);
-  if(ed.text&&ed.textStyle!=='none')drawText(x,S,ed.text,ed.textStyle,ed.color);}
-function scatter(x,S,emojis){if(!emojis.length)return;x.textAlign='center';x.textBaseline='middle';const N=18;
-  for(let i=0;i<N;i++){const t=i/N*Math.PI*2,r=S*0.455,px=S/2+Math.cos(t)*r,py=S/2+Math.sin(t)*r,sz=42+((i*37)%26);
-    x.font=`${sz}px "Jua",sans-serif`;x.fillText(emojis[i%emojis.length],px,py);}x.textBaseline='alphabetic';}
-function wrapText(x,text,maxW){const out=[];text.split('\n').forEach(par=>{const words=par.split(/\s+/);let cur='';
+  ed.items.forEach(it=>drawItem(x,it));
+  const sel=ed.items[ed.sel];
+  if(sel&&sel._bb){const bb=sel._bb;x.save();x.strokeStyle='#FF7E67';x.lineWidth=4;x.setLineDash([12,8]);
+    rrect(x,bb.x-12,bb.y-12,bb.w+24,bb.h+24,14);x.stroke();x.setLineDash([]);
+    const hx=bb.x+bb.w+12,hy=bb.y-12;x.fillStyle='#FF7E67';x.beginPath();x.arc(hx,hy,30,0,7);x.fill();
+    x.fillStyle='#fff';x.font='700 36px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('×',hx,hy-1);x.textBaseline='alphabetic';
+    sel._del={x:hx,y:hy,r:40};x.restore();}}
+function drawItem(x,it){
+  if(it.kind==='sticker'){x.textAlign='center';x.textBaseline='middle';x.font=`${it.size}px "Jua",sans-serif`;
+    x.fillText(it.emoji,it.x,it.y);it._bb={x:it.x-it.size/2,y:it.y-it.size/2,w:it.size,h:it.size};x.textBaseline='alphabetic';}
+  else{x.textAlign='center';x.font=`400 ${it.size}px "Jua",sans-serif`;const lines=wrapText(x,it.text||' ',640),lh=it.size*1.2;
+    const tw=Math.max(12,...lines.map(l=>x.measureText(l).width)),th=lines.length*lh,pad=it.style==='speech'?34:14,bw=tw+pad*2,bh=th+pad*2,bx=it.x-bw/2,by=it.y-bh/2;
+    if(it.style==='speech'){x.fillStyle='#fff';rrect(x,bx,by,bw,bh,28);x.fill();
+      x.beginPath();x.moveTo(it.x-22,by+bh);x.lineTo(it.x+4,by+bh+38);x.lineTo(it.x+34,by+bh);x.closePath();x.fill();}
+    x.fillStyle=(it.style==='speech'&&it.color==='#FFFFFF')?'#FF7E67':it.color;x.textBaseline='middle';
+    lines.forEach((l,i)=>x.fillText(l,it.x,by+pad+lh/2+i*lh));x.textBaseline='alphabetic';it._bb={x:bx,y:by,w:bw,h:bh};}}
+function wrapText(x,text,maxW){const out=[];String(text).split('\n').forEach(par=>{const words=par.split(/\s+/);let cur='';
   for(const w of words){const t=cur?cur+' '+w:w;if(x.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t;}out.push(cur);});return out.length?out:[text];}
-function drawText(x,S,text,style,color){x.textAlign='center';x.font='400 56px "Jua",sans-serif';const lines=wrapText(x,text,S*0.66),lh=66;
-  const tw=Math.max(...lines.map(l=>x.measureText(l).width));
-  if(style==='speech'){const bw=tw+80,bh=lines.length*lh+44,bx=(S-bw)/2,by=66;
-    x.fillStyle='#fff';rrect(x,bx,by,bw,bh,30);x.fill();
-    x.beginPath();x.moveTo(S/2-26,by+bh);x.lineTo(S/2+6,by+bh+46);x.lineTo(S/2+40,by+bh);x.closePath();x.fill();
-    x.fillStyle=color==='#FFFFFF'?'#FF7E67':color;x.textBaseline='middle';lines.forEach((l,i)=>x.fillText(l,S/2,by+26+lh/2+i*lh));x.textBaseline='alphabetic';}
-  else{const bh=lines.length*lh+28,bw=tw+60,by=S-bh-46;x.fillStyle='rgba(0,0,0,.4)';rrect(x,(S-bw)/2,by,bw,bh,22);x.fill();
-    x.fillStyle=color;x.textBaseline='middle';lines.forEach((l,i)=>x.fillText(l,S/2,by+16+lh/2+i*lh));x.textBaseline='alphabetic';}}
 
-function edTab(p){document.querySelectorAll('.edtab').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+/* item controls */
+function updateItemBar(){const bar=document.getElementById('edItemBar');if(bar)bar.style.display=ed.sel>=0?'flex':'none';}
+function edItemSize(d){const it=ed.items[ed.sel];if(!it)return;it.size=Math.max(28,Math.min(440,it.size+d));drawEditor();}
+function edItemDelete(){if(ed.sel<0)return;ed.items.splice(ed.sel,1);ed.sel=-1;updateItemBar();drawEditor();if(curEdTab==='text')edTab('text');}
+function edAddSticker(em){ed.items.push({kind:'sticker',emoji:em,x:540,y:540,size:150});ed.sel=ed.items.length-1;updateItemBar();drawEditor();}
+function curText(){const it=ed.items[ed.sel];return it&&it.kind==='text'?it:null;}
+function edAddText(){ed.items.push({kind:'text',text:'',x:540,y:300,size:66,color:'#FF7E67',style:'plain'});ed.sel=ed.items.length-1;updateItemBar();edTab('text');drawEditor();}
+function edTextInput(v){let it=curText();if(!it){ed.items.push({kind:'text',text:'',x:540,y:300,size:66,color:'#FF7E67',style:'plain'});ed.sel=ed.items.length-1;it=ed.items[ed.sel];updateItemBar();}it.text=v;drawEditor();}
+function edTextBubble(){const it=curText();if(!it)return;it.style=it.style==='speech'?'plain':'speech';drawEditor();syncText();}
+function edTextColor(c){const it=curText();if(!it)return;it.color=c;drawEditor();syncText();}
+function syncText(){const it=curText();document.querySelectorAll('#edPanel [data-col]').forEach(b=>b.classList.toggle('on',!!it&&b.dataset.col===it.color));
+  const bb=document.getElementById('edBubbleBtn');if(bb)bb.classList.toggle('on',!!it&&it.style==='speech');}
+
+function edTab(p){curEdTab=p;document.querySelectorAll('.edtab').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   const el=document.getElementById('edPanel');let h='';
-  if(p==='photo'){h=`<p class="lab">사진을 드래그해 위치를 옮기고, 슬라이더로 확대해요 (잘림 방지)</p>
+  if(p==='photo'){h=`<p class="lab">사진을 드래그해 위치를 옮기고, 슬라이더로 확대해요</p>
     <input type="range" min="100" max="320" value="${Math.round(ed.scale*100)}" oninput="ed.scale=this.value/100;drawEditor();">`;}
-  else if(p==='frame'){h='<p class="lab">프레임</p><div class="edrow">'+Object.keys(FRAMES).map(k=>{
-    const names={cream:'크림',white:'화이트',coral:'코랄',mint:'민트',yellow:'옐로',black:'블랙',none:'없음'};
-    return `<button class="chip ${ed.frame===k?'on':''}" onclick="ed.frame='${k}';edTab('frame');drawEditor();">${names[k]}</button>`;}).join('')+'</div>';}
-  else if(p==='sticker'){h='<p class="lab">스티커</p><div class="edrow">'+Object.keys(STK).map(k=>{
-    const names={none:'없음',paws:'🐾 발바닥',hearts:'💕 하트',stars:'⭐ 반짝',party:'🎉 파티',flowers:'🌸 꽃',music:'🎵 음표',bones:'🦴 간식',snow:'❄️ 겨울'};
-    return `<button class="chip ${ed.sticker===k?'on':''}" onclick="ed.sticker='${k}';edTab('sticker');drawEditor();">${names[k]}</button>`;}).join('')+'</div>';}
-  else if(p==='text'){h=`<input class="tinput" placeholder="글씨를 입력하세요 (예: 사랑해 ♥)" value="${ed.text.replace(/"/g,'&quot;')}" oninput="ed.text=this.value;if(ed.textStyle==='none')ed.textStyle='speech';edTab('text');drawEditor();">
-    <p class="lab" style="margin-top:12px">모양</p><div class="edrow">
-      <button class="chip ${ed.textStyle==='none'?'on':''}" onclick="ed.textStyle='none';edTab('text');drawEditor();">없음</button>
-      <button class="chip ${ed.textStyle==='speech'?'on':''}" onclick="ed.textStyle='speech';edTab('text');drawEditor();">💬 말풍선</button>
-      <button class="chip ${ed.textStyle==='caption'?'on':''}" onclick="ed.textStyle='caption';edTab('text');drawEditor();">▭ 캡션</button>
-    </div><p class="lab" style="margin-top:12px">색</p><div class="edrow">`+
-    TEXTCOLORS.map(c=>`<button class="sw-color ${ed.color===c?'on':''}" style="background:${c}" onclick="ed.color='${c}';edTab('text');drawEditor();"></button>`).join('')+'</div>';}
+  else if(p==='frame'){const names={cream:'크림',white:'화이트',coral:'코랄',mint:'민트',yellow:'옐로',black:'블랙',none:'없음'};
+    h='<p class="lab">프레임</p><div class="edrow">'+Object.keys(FRAMES).map(k=>`<button class="chip ${ed.frame===k?'on':''}" onclick="ed.frame='${k}';edTab('frame');drawEditor();">${names[k]}</button>`).join('')+'</div>';}
+  else if(p==='sticker'){h='<p class="lab">탭하면 사진 위에 올라가요. 손으로 끌어 옮기고, 위 막대로 크기·삭제!</p><div class="edrow">'+
+    STKSET.map(e=>`<button class="chip emojibtn" onclick="edAddSticker('${e}')">${e}</button>`).join('')+'</div>';}
+  else if(p==='text'){const it=curText();
+    h=`<input class="tinput" id="edTextInput" placeholder="글씨를 입력하세요 (예: 사랑해 ♥)" value="${it?String(it.text||'').replace(/"/g,'&quot;'):''}" oninput="edTextInput(this.value)">
+    <div class="edrow" style="margin-top:10px">
+      <button class="chip" onclick="edAddText()">＋ 새 글씨</button>
+      <button class="chip ${it&&it.style==='speech'?'on':''}" id="edBubbleBtn" onclick="edTextBubble()">💬 말풍선</button>
+    </div><p class="lab" style="margin-top:10px">색</p><div class="edrow">`+
+    TEXTCOLORS.map(c=>`<button class="sw-color ${it&&it.color===c?'on':''}" data-col="${c}" style="background:${c}" onclick="edTextColor('${c}')"></button>`).join('')+
+    `</div><p class="hint" style="margin-top:8px">글씨를 손으로 끌어 원하는 곳에 두세요.</p>`;}
   el.innerHTML=h;}
-function saveEditor(){drawEditor();const url=edCanvas.toDataURL('image/jpeg',.95);closeEditor();showResult(url,(ed.pet.name||'pet')+'_꾸미기.jpg');}
+function saveEditor(){ed.sel=-1;updateItemBar();drawEditor();const url=edCanvas.toDataURL('image/jpeg',.95);closeEditor();showResult(url,(ed.pet.name||'pet')+'_꾸미기.jpg');}
 
 /* highlight */
 let hlRAF=null,hlMusic=null,hlImgs=[],hlPet=null;
