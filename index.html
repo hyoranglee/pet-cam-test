@@ -22,7 +22,7 @@
   #petname{font-size:16px;}#petsub{font-size:11px;color:var(--muted);}
   #logo{margin-left:auto;font-size:22px;}
   #tabs{display:flex;gap:6px;background:#F4E7DC;border-radius:999px;padding:4px;margin:8px 16px;}
-  .tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;font-size:15px;color:var(--muted);font-family:"Jua";}
+  .tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:999px;font-size:14px;color:var(--muted);font-family:"Jua";}
   .tab.on{background:var(--card);color:var(--coral);box-shadow:0 2px 8px rgba(120,80,50,.12);}
   #bdayBanner{margin:2px 16px 0;background:var(--yellow);color:#7a5b14;border-radius:16px;padding:12px 16px;
               font-family:"Jua";font-size:14px;text-align:center;box-shadow:var(--shadow);}
@@ -72,7 +72,10 @@
   .petface .fn{font-family:"Jua";font-size:12px;color:var(--muted);max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .petface.on .fn{color:var(--coral);}
   .petface.add .fc{background:#FFF1ED;color:var(--coral);border:2px dashed var(--coral);font-size:28px;}
-  #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  #grid{display:block;}
+  .daysec{margin-bottom:6px;}
+  .dhead{font-family:"Jua";font-size:14px;color:var(--muted);margin:16px 2px 8px;}
+  .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
   #grid .gcell{position:relative;}
   #grid .gcell img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;box-shadow:var(--shadow);display:block;}
   #grid .gcheck{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;display:none;
@@ -129,6 +132,22 @@
   #edItemBar button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-family:"Jua";font-size:13px;color:var(--ink);}
   #edItemBar .del{border-color:#f0c9c0;color:var(--coral);}
   .emojibtn{font-size:22px;padding:6px 12px;}
+  /* diary */
+  #diaryList{margin-top:6px;}
+  .dcard{display:flex;gap:12px;background:var(--card);border-radius:18px;padding:10px;margin-bottom:10px;box-shadow:var(--shadow);align-items:center;}
+  .dcard img{width:84px;height:84px;object-fit:cover;border-radius:14px;flex:0 0 auto;}
+  .dcbody{min-width:0;flex:1;}
+  .ddate{font-family:"Jua";font-size:15px;color:var(--ink);}
+  .dtags{font-size:15px;margin:2px 0;}
+  .dtext{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dephotowrap{text-align:center;}
+  #dePhoto{max-width:100%;max-height:34vh;border-radius:16px;box-shadow:var(--shadow);}
+  textarea.input{font-family:inherit;width:100%;}
+  .diarypage{background:#FFFDF7;background-image:repeating-linear-gradient(transparent,transparent 37px,#F0E7DA 38px);}
+  .dvdate{font-family:"Jua";font-size:18px;color:var(--coral);text-align:center;margin-bottom:10px;}
+  .dvphoto{display:block;max-width:100%;max-height:46vh;margin:0 auto;border-radius:16px;box-shadow:var(--shadow);border:6px solid #fff;}
+  .dvtags{font-size:22px;text-align:center;margin:12px 0 6px;letter-spacing:4px;}
+  .dvtext{font-size:16px;line-height:38px;color:var(--ink);white-space:pre-wrap;word-break:break-word;padding:0 4px;}
   .edpanel .tinput{width:100%;border:2px solid var(--line);border-radius:14px;padding:11px 14px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
   #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
   #picker.on{display:flex;}
@@ -182,6 +201,7 @@
     <button class="tab on jua" id="tabCam" onclick="showTab('cam')">카메라</button>
     <button class="tab jua" id="tabAlbum" onclick="showTab('album')">앨범</button>
     <button class="tab jua" id="tabCreate" onclick="showTab('create')">만들기</button>
+    <button class="tab jua" id="tabDiary" onclick="showTab('diary')">다이어리</button>
   </div>
   <div id="bdayBanner" onclick="makeBirthday()" style="display:none;"></div>
 
@@ -231,6 +251,12 @@
     <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">두 사진을 골라 나란히</span></span></button>
     <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">사진 4장 골라 인생네컷</span></span></button>
     <p class="crhint">사진을 먼저 몇 장 찍어두면 더 예쁘게 만들어져요 🐾</p>
+  </div>
+
+  <div id="diary" style="display:none;">
+    <button class="addbtn" onclick="writeDiary()">＋ 오늘의 그림일기 ✏️</button>
+    <div id="diaryList"></div>
+    <div id="diaryEmpty" style="display:none;"><div class="big">📔</div><p>아직 일기가 없어요<br>사진과 함께 오늘을 기록해보세요!</p></div>
   </div>
 </div>
 
@@ -338,6 +364,36 @@
   </div>
 </div>
 
+<!-- Diary compose -->
+<div class="sheet" id="diaryEdit"><div class="sheetbox">
+  <h2 id="deTitle">오늘의 그림일기 ✏️</h2>
+  <div class="dephotowrap"><img id="dePhoto" alt=""></div>
+  <div class="edrow" style="justify-content:center;margin:10px 0 4px">
+    <button class="chip" onclick="dePickPhoto()">🖼️ 사진 바꾸기</button>
+    <button class="chip" onclick="deDecorate()">✨ 꾸미기</button>
+  </div>
+  <label class="fld">날짜</label>
+  <input class="input" id="deDate" type="date">
+  <label class="fld">오늘의 기록 (탭으로 표시)</label>
+  <div class="edrow" id="deTags"></div>
+  <textarea class="input" id="deText" rows="5" placeholder="오늘 우리 아이는… 밥도 잘 먹고 산책도 신나게! 🐾" style="resize:none;margin-top:8px"></textarea>
+  <button class="bigbtn" style="margin-top:12px" onclick="saveDiary()">저장</button>
+  <button class="addbtn" onclick="closeDiaryEdit()">취소</button>
+</div></div>
+
+<!-- Diary view -->
+<div class="sheet" id="diaryView"><div class="sheetbox diarypage">
+  <div class="dvdate" id="dvDate"></div>
+  <img id="dvPhoto" class="dvphoto" alt="">
+  <div class="dvtags" id="dvTags"></div>
+  <div class="dvtext" id="dvText"></div>
+  <div class="acts" style="margin-top:14px">
+    <button onclick="editDiary()">수정</button>
+    <button onclick="delDiary()">삭제</button>
+    <button onclick="closeDiaryView()">닫기</button>
+  </div>
+</div></div>
+
 <!-- Sound library sheet -->
 <div class="sheet" id="soundSheet"><div class="sheetbox">
   <h2>소리 추가하기 🔊</h2>
@@ -366,10 +422,11 @@
 <script>
 /* ---------- storage ---------- */
 let db;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('petcam',1);
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('petcam',2);
   r.onupgradeneeded=e=>{const d=e.target.result;
     if(!d.objectStoreNames.contains('photos')){const s=d.createObjectStore('photos',{keyPath:'id'});s.createIndex('pet','petId');}
-    if(!d.objectStoreNames.contains('voices'))d.createObjectStore('voices',{keyPath:'id'});};
+    if(!d.objectStoreNames.contains('voices'))d.createObjectStore('voices',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('diary')){const s=d.createObjectStore('diary',{keyPath:'id'});s.createIndex('pet','petId');}};
   r.onsuccess=e=>{db=e.target.result;res();};r.onerror=()=>rej(r.error);});}
 const store=(n,m)=>db.transaction(n,m).objectStore(n);
 const idbPut=(n,v)=>new Promise((res,rej)=>{const r=store(n,'readwrite').put(v);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
@@ -377,6 +434,14 @@ const idbDel=(n,k)=>new Promise(res=>{const r=store(n,'readwrite').delete(k);r.o
 const idbAll=(n)=>new Promise(res=>{const o=[];const r=store(n,'readonly').openCursor();r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});
 function photosFor(id){return new Promise(res=>{const o=[];const r=store('photos','readonly').index('pet').openCursor(IDBKeyRange.only(id));
   r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o.sort((a,b)=>b.ts-a.ts));};});}
+function diaryFor(id){return new Promise(res=>{const o=[];const r=store('diary','readonly').index('pet').openCursor(IDBKeyRange.only(id));
+  r.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.ts-a.ts));};});}
+function dayKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayLabel(ts){const d=new Date(ts),today=dayKey(Date.now()),yest=dayKey(Date.now()-864e5),k=dayKey(ts);
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`+(k===today?' · 오늘':k===yest?' · 어제':'');}
+function todayISO(){return dayKey(Date.now());}
+function isoLabel(iso){const a=String(iso).split('-').map(Number);return `${a[0]}년 ${a[1]}월 ${a[2]}일`;}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 
 let pets=JSON.parse(localStorage.getItem('pets')||'[]');
 let activeId=localStorage.getItem('active')||null;
@@ -501,7 +566,7 @@ function drawBoxes(preds,locked){overlay.width=video.videoWidth;overlay.height=v
     octx.strokeStyle=(locked===p)?'#5FC9A6':'rgba(255,255,255,.55)';octx.lineWidth=4;octx.beginPath();octx.roundRect(x,y,w,h,16);octx.stroke();}}
 function clearOverlay(){overlay.width=video.videoWidth;overlay.height=video.videoHeight;octx.clearRect(0,0,overlay.width,overlay.height);}
 function setStatus(t){statusEl.textContent=t;}
-function anyModalOpen(){return['light','result','player','picker','petSheet','addSheet','soundSheet','editor','cropper'].some(id=>{const el=document.getElementById(id);return el&&el.classList.contains('on');});}
+function anyModalOpen(){return['light','result','player','picker','petSheet','addSheet','soundSheet','editor','cropper','diaryEdit','diaryView'].some(id=>{const el=document.getElementById(id);return el&&el.classList.contains('on');});}
 
 async function loop(){
   if(model&&video.readyState>=2){
@@ -552,9 +617,10 @@ let curTab='cam';
 function showTab(t){curTab=t;document.getElementById('camera').style.display=t==='cam'?'block':'none';
   document.getElementById('album').style.display=t==='album'?'block':'none';
   document.getElementById('create').style.display=t==='create'?'block':'none';
-  tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');tabCreate.classList.toggle('on',t==='create');
+  document.getElementById('diary').style.display=t==='diary'?'block':'none';
+  tabCam.classList.toggle('on',t==='cam');tabAlbum.classList.toggle('on',t==='album');tabCreate.classList.toggle('on',t==='create');tabDiary.classList.toggle('on',t==='diary');
   if(t!=='album'&&typeof exitSelect==='function')exitSelect();
-  if(t==='album')renderAlbum();}
+  if(t==='album')renderAlbum();if(t==='diary')renderDiary();}
 function renderPetStrip(){const strip=document.getElementById('petStrip');strip.innerHTML='';
   [...pets].reverse().forEach(p=>{const d=document.createElement('button');d.className='petface'+(p.id===activeId?' on':'');
     const fc=p.avatarUrl?`<span class="fc" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="fc">${emojiFor(p)}</span>`;
@@ -563,8 +629,13 @@ function renderPetStrip(){const strip=document.getElementById('petStrip');strip.
 async function renderAlbum(){renderPetStrip();const pet=active();const grid=document.getElementById('grid'),empty=document.getElementById('empty');
   if(!pet){grid.innerHTML='';empty.style.display='block';exitSelect();return;}
   const ph=await photosFor(pet.id);grid.innerHTML='';empty.style.display=ph.length?'none':'block';
-  ph.forEach(p=>{const cell=document.createElement('div');cell.className='gcell';cell.dataset.id=p.id;
-    cell.innerHTML=`<img src="${p.dataUrl}"><span class="gcheck">✓</span>`;attachPhotoHandlers(cell,p);grid.appendChild(cell);});
+  let curDay='',sec=null;
+  ph.forEach(p=>{const day=dayKey(p.ts);
+    if(day!==curDay){curDay=day;const wrap=document.createElement('div');wrap.className='daysec';
+      const head=document.createElement('div');head.className='dhead';head.textContent=dayLabel(p.ts);wrap.appendChild(head);
+      sec=document.createElement('div');sec.className='dgrid';wrap.appendChild(sec);grid.appendChild(wrap);}
+    const cell=document.createElement('div');cell.className='gcell';cell.dataset.id=p.id;
+    cell.innerHTML=`<img src="${p.dataUrl}"><span class="gcheck">✓</span>`;attachPhotoHandlers(cell,p);sec.appendChild(cell);});
   applySelectUI();}
 
 /* multi-select delete */
@@ -631,7 +702,7 @@ function openPets(){const list=document.getElementById('petList');list.innerHTML
     const av=p.avatarUrl?`<span class="avatar" style="background-image:url(${p.avatarUrl})"></span>`:`<span class="avatar">${emojiFor(p)}</span>`;
     r.innerHTML=`${av}<div style="flex:1"><div class="nm">${p.name}</div><div class="sb">${typeLabel(p)} · ${ageText(p)}</div></div>`+
       `${p.id===activeId?'<span style="color:var(--coral);margin-right:4px">✓</span>':''}<span class="petdel" title="삭제">🗑️</span>`;
-    r.onclick=()=>{exitSelect();activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();};
+    r.onclick=()=>{exitSelect();activeId=p.id;savePets();refreshHeader();renderPetStrip();closeSheets();if(curTab==='album')renderAlbum();if(curTab==='diary')renderDiary();};
     r.querySelector('.petdel').onclick=e=>{e.stopPropagation();deletePet(p.id);};list.appendChild(r);});
   document.getElementById('petSheet').classList.add('on');}
 async function deletePet(id){const p=pets.find(x=>x.id===id);if(!p)return;
@@ -776,7 +847,7 @@ let edCanvas=null,edWired=false,curEdTab='photo';
 
 async function makeSticker(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
   openPicker({photos:ph,min:1,max:1,title:'꾸밀 사진을 골라요',cb:async s=>{await openEditor(p,s[0].dataUrl);}});}
-async function openEditor(pet,url){await ensureFont();ed.pet=pet;ed.img=await loadImg(url);
+async function openEditor(pet,url,onDone){await ensureFont();ed.pet=pet;ed.img=await loadImg(url);ed.onDone=onDone||null;
   ed.scale=1;ed.ox=0;ed.oy=0;ed.frame='cream';ed.items=[];ed.sel=-1;
   edCanvas=document.getElementById('edCanvas');wireEditor();document.getElementById('editor').classList.add('on');updateItemBar();edTab('photo');drawEditor();}
 function closeEditor(){document.getElementById('editor').classList.remove('on');}
@@ -851,7 +922,43 @@ function edTab(p){curEdTab=p;document.querySelectorAll('.edtab').forEach(b=>b.cl
     TEXTCOLORS.map(c=>`<button class="sw-color ${it&&it.color===c?'on':''}" data-col="${c}" style="background:${c}" onclick="edTextColor('${c}')"></button>`).join('')+
     `</div><p class="hint" style="margin-top:8px">글씨를 손으로 끌어 원하는 곳에 두세요.</p>`;}
   el.innerHTML=h;}
-function saveEditor(){ed.sel=-1;updateItemBar();drawEditor();const url=edCanvas.toDataURL('image/jpeg',.95);closeEditor();showResult(url,(ed.pet.name||'pet')+'_꾸미기.jpg');}
+function saveEditor(){ed.sel=-1;updateItemBar();drawEditor();const url=edCanvas.toDataURL('image/jpeg',.95);closeEditor();
+  if(ed.onDone){const cb=ed.onDone;ed.onDone=null;cb(url);}else showResult(url,(ed.pet.name||'pet')+'_꾸미기.jpg');}
+
+/* ---------- diary (그림일기) ---------- */
+const TAGS=[{e:'😋',l:'밥'},{e:'💩',l:'응가'},{e:'🚶',l:'산책'},{e:'🎾',l:'놀이'},{e:'🏥',l:'병원'},{e:'💊',l:'약'},{e:'🛁',l:'목욕'},{e:'😴',l:'잠'}];
+let deState=null,dvCur=null;
+async function renderDiary(){const p=active();const list=document.getElementById('diaryList'),empty=document.getElementById('diaryEmpty');
+  if(!p){list.innerHTML='';empty.style.display='block';return;}
+  const es=await diaryFor(p.id);list.innerHTML='';empty.style.display=es.length?'none':'block';
+  es.forEach(e=>{const c=document.createElement('div');c.className='dcard';c.onclick=()=>openDiary(e.id);
+    const txt=escapeHtml(e.text||'').slice(0,80)||'<span style="color:#cbb">(내용 없음)</span>';
+    c.innerHTML=`<img src="${e.photo}"><div class="dcbody"><div class="ddate">${isoLabel(e.date)}</div>
+      <div class="dtags">${(e.tags||[]).join(' ')}</div><div class="dtext">${txt}</div></div>`;
+    list.appendChild(c);});}
+function writeDiary(){const p=needPet();if(!p)return;photosFor(p.id).then(ph=>{
+  if(!ph.length){toast('먼저 사진을 찍어 앨범에 담아주세요');return;}
+  openPicker({photos:ph,min:1,max:1,title:'일기에 넣을 사진을 골라요',cb:s=>{deState={id:null,photo:s[0].dataUrl,date:todayISO(),text:'',tags:[]};openDiaryEdit();}});});}
+function openDiaryEdit(){document.getElementById('deTitle').textContent=deState.id?'그림일기 수정 ✏️':'오늘의 그림일기 ✏️';
+  document.getElementById('dePhoto').src=deState.photo;document.getElementById('deDate').value=deState.date;
+  document.getElementById('deText').value=deState.text;renderDeTags();document.getElementById('diaryEdit').classList.add('on');}
+function renderDeTags(){document.getElementById('deTags').innerHTML=TAGS.map(t=>`<button class="chip ${deState.tags.includes(t.e)?'on':''}" onclick="toggleDeTag('${t.e}')">${t.e} ${t.l}</button>`).join('');}
+function toggleDeTag(e){const i=deState.tags.indexOf(e);if(i>=0)deState.tags.splice(i,1);else deState.tags.push(e);renderDeTags();}
+function dePickPhoto(){const p=active();if(!p)return;photosFor(p.id).then(ph=>openPicker({photos:ph,min:1,max:1,title:'사진 바꾸기',cb:s=>{deState.photo=s[0].dataUrl;document.getElementById('dePhoto').src=deState.photo;}}));}
+function deDecorate(){const p=active();if(!p)return;openEditor(p,deState.photo,url=>{deState.photo=url;document.getElementById('dePhoto').src=url;});}
+async function saveDiary(){const p=active();if(!p){toast('아이를 먼저 등록해주세요');return;}
+  deState.text=document.getElementById('deText').value.trim();deState.date=document.getElementById('deDate').value||todayISO();
+  const id=deState.id||('d'+Date.now());
+  await idbPut('diary',{id,petId:p.id,date:deState.date,photo:deState.photo,text:deState.text,tags:deState.tags,ts:Date.now()});
+  closeDiaryEdit();renderDiary();toast('일기를 저장했어요! 📔');}
+function closeDiaryEdit(){document.getElementById('diaryEdit').classList.remove('on');}
+async function openDiary(id){const p=active();if(!p)return;const e=(await diaryFor(p.id)).find(x=>x.id===id);if(!e)return;dvCur=e;
+  document.getElementById('dvDate').textContent=isoLabel(e.date);document.getElementById('dvPhoto').src=e.photo;
+  document.getElementById('dvTags').textContent=(e.tags||[]).join('  ');document.getElementById('dvText').textContent=e.text||'';
+  document.getElementById('diaryView').classList.add('on');}
+function closeDiaryView(){document.getElementById('diaryView').classList.remove('on');}
+function editDiary(){if(!dvCur)return;deState={id:dvCur.id,photo:dvCur.photo,date:dvCur.date,text:dvCur.text||'',tags:(dvCur.tags||[]).slice()};closeDiaryView();openDiaryEdit();}
+async function delDiary(){if(!dvCur)return;if(!confirm('이 일기를 삭제할까요?'))return;await idbDel('diary',dvCur.id);closeDiaryView();renderDiary();}
 
 /* highlight */
 let hlRAF=null,hlMusic=null,hlImgs=[],hlPet=null;
