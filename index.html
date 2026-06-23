@@ -101,14 +101,14 @@
   #light a,#light button,#result a,#result button,#player button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
   #recHint{color:var(--yellow);font-size:13px;margin-top:10px;min-height:18px;font-family:"Jua";}
   /* editor */
-  #editor{position:fixed;inset:0;background:var(--cream);display:none;flex-direction:column;z-index:56;max-width:480px;margin:0 auto;}
-  #editor.on{display:flex;}
+  #editor,#cropper{position:fixed;inset:0;background:var(--cream);display:none;flex-direction:column;z-index:56;max-width:480px;margin:0 auto;}
+  #editor.on,#cropper.on{display:flex;}
   .edtop{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
   .edtop .ti{font-family:"Jua";font-size:17px;}
   .edtop button{border:none;background:transparent;font-family:"Jua";font-size:16px;color:var(--muted);}
   .edtop .save{color:#fff;background:var(--coral);border-radius:12px;padding:8px 18px;}
   .edcanvas{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden;background:#F4E7DC;}
-  #edCanvas{max-width:100%;max-height:100%;border-radius:14px;box-shadow:var(--shadow);touch-action:none;cursor:grab;}
+  #edCanvas,#cropCanvas{max-width:100%;max-height:100%;border-radius:14px;box-shadow:var(--shadow);touch-action:none;cursor:grab;}
   .edtabs{display:flex;gap:6px;padding:8px 12px 0;}
   .edtab{flex:1;border:none;background:transparent;padding:10px 0;font-family:"Jua";font-size:14px;color:var(--muted);border-radius:12px 12px 0 0;}
   .edtab.on{color:var(--coral);background:var(--card);}
@@ -216,9 +216,9 @@
   </div>
 
   <div id="create" style="display:none;">
+    <button class="crcard" onclick="makeSticker()"><span class="emoji">✨</span><span><span class="ct">사진 꾸미기</span><br><span class="cd">위치·프레임·스티커·글씨 직접 편집</span></span></button>
     <button class="crcard" onclick="makeBirthday()"><span class="emoji">🎂</span><span><span class="ct">생일 카드</span><br><span class="cd">사진 1장으로 생일 축하 카드</span></span></button>
     <button class="crcard" onclick="makeHighlight()"><span class="emoji">🎬</span><span><span class="ct">하이라이트 영상</span><br><span class="cd">고른 사진들로 슬라이드쇼</span></span></button>
-    <button class="crcard" onclick="makeSticker()"><span class="emoji">✨</span><span><span class="ct">사진 꾸미기</span><br><span class="cd">위치·프레임·스티커·글씨 직접 편집</span></span></button>
     <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">두 사진을 골라 나란히</span></span></button>
     <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">사진 4장 골라 인생네컷</span></span></button>
     <p class="crhint">사진을 먼저 몇 장 찍어두면 더 예쁘게 만들어져요 🐾</p>
@@ -311,6 +311,16 @@
     <button class="edtab" data-p="text" onclick="edTab('text')">💬 글씨</button>
   </div>
   <div class="edpanel" id="edPanel"></div>
+</div>
+
+<!-- Cropper (per-cell adjust for birthday/then-now/fourcut) -->
+<div id="cropper">
+  <div class="edtop"><button onclick="cropCancel()">취소</button><span class="ti" id="cropTitle">사진 맞추기</span><button class="save" id="cropNext" onclick="cropNext()">다음</button></div>
+  <div class="edcanvas"><canvas id="cropCanvas" width="720" height="720"></canvas></div>
+  <div class="edpanel">
+    <p class="lab">사진을 드래그해 위치를 옮기고, 슬라이더로 확대해요</p>
+    <input type="range" id="cropZoom" min="100" max="320" value="100" oninput="cropZoomInput(this.value)">
+  </div>
 </div>
 
 <!-- Player -->
@@ -638,34 +648,71 @@ function closePicker(){document.getElementById('picker').classList.remove('on');
 function pkConfirm(){if(pk.sel.length<pk.min)return;const chosen=pk.sel.map(id=>pk.photos.find(p=>p.id===id));closePicker();pk.cb(chosen);}
 
 /* ---------- create tools ---------- */
+/* shared: place image into a box using a normalized transform {scale,nx,ny} (resolution-independent) */
+function placeImageN(x,img,bx,by,bw,bh,tf,clip){tf=tf||{scale:1,nx:0,ny:0};
+  const base=Math.max(bw/img.width,bh/img.height),S=base*(tf.scale||1),dw=img.width*S,dh=img.height*S;
+  const ox=(tf.nx||0)*Math.max(0,(dw-bw)/2),oy=(tf.ny||0)*Math.max(0,(dh-bh)/2);
+  const dx=bx+(bw-dw)/2+ox,dy=by+(bh-dh)/2+oy;
+  x.save();if(clip==='circle'){x.beginPath();x.arc(bx+bw/2,by+bh/2,Math.min(bw,bh)/2,0,7);x.clip();}else{rrect(x,bx,by,bw,bh,clip||0);x.clip();}
+  x.drawImage(img,dx,dy,dw,dh);x.restore();}
+
+/* ---------- per-cell cropper ---------- */
+let cropCanvas=null;const crop={slots:[],idx:0,tf:[],cb:null,img:null,_wired:false};
+async function startCrop(slots,cb){crop.slots=slots;crop.idx=0;crop.cb=cb;crop.tf=slots.map(()=>({scale:1,nx:0,ny:0}));
+  cropCanvas=document.getElementById('cropCanvas');wireCrop();await loadSlot();document.getElementById('cropper').classList.add('on');}
+async function loadSlot(){const s=crop.slots[crop.idx];crop.img=await loadImg(s.url);
+  let w,h;if(s.aspect>=1){w=720;h=Math.round(720/s.aspect);}else{h=720;w=Math.round(720*s.aspect);}
+  cropCanvas.width=w;cropCanvas.height=h;
+  document.getElementById('cropZoom').value=Math.round(crop.tf[crop.idx].scale*100);
+  document.getElementById('cropTitle').textContent=(s.name?s.name+' ':'')+'사진 맞추기 ('+(crop.idx+1)+'/'+crop.slots.length+')';
+  document.getElementById('cropNext').textContent=crop.idx===crop.slots.length-1?'완료':'다음';
+  drawCrop();}
+function drawCrop(){const c=cropCanvas,x=c.getContext('2d'),s=crop.slots[crop.idx];x.fillStyle='#241c17';x.fillRect(0,0,c.width,c.height);
+  placeImageN(x,crop.img,0,0,c.width,c.height,crop.tf[crop.idx],s.radius==='circle'?0:(s.radius||0));
+  if(s.radius==='circle'){x.save();x.fillStyle='rgba(36,28,23,.5)';x.beginPath();x.rect(0,0,c.width,c.height);x.arc(c.width/2,c.height/2,Math.min(c.width,c.height)/2,0,7,true);x.fill('evenodd');
+    x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.arc(c.width/2,c.height/2,Math.min(c.width,c.height)/2,0,7);x.stroke();x.restore();}}
+function cropZoomInput(v){crop.tf[crop.idx].scale=v/100;drawCrop();}
+async function cropNext(){if(crop.idx<crop.slots.length-1){crop.idx++;await loadSlot();}else{document.getElementById('cropper').classList.remove('on');crop.cb(crop.tf.map(t=>({...t})));}}
+function cropCancel(){document.getElementById('cropper').classList.remove('on');}
+function wireCrop(){if(crop._wired)return;crop._wired=true;let drag=false,lx=0,ly=0;
+  const pt=e=>{const r=cropCanvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(cropCanvas.width/r.width),y:(e.clientY-r.top)*(cropCanvas.height/r.height)};};
+  cropCanvas.addEventListener('pointerdown',e=>{drag=true;const p=pt(e);lx=p.x;ly=p.y;cropCanvas.setPointerCapture(e.pointerId);cropCanvas.style.cursor='grabbing';});
+  cropCanvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pt(e),tf=crop.tf[crop.idx],bw=cropCanvas.width,bh=cropCanvas.height,img=crop.img;
+    const base=Math.max(bw/img.width,bh/img.height),S=base*tf.scale,dw=img.width*S,dh=img.height*S;
+    if(dw>bw)tf.nx=Math.max(-1,Math.min(1,tf.nx+(p.x-lx)/((dw-bw)/2)));
+    if(dh>bh)tf.ny=Math.max(-1,Math.min(1,tf.ny+(p.y-ly)/((dh-bh)/2)));lx=p.x;ly=p.y;drawCrop();});
+  const end=()=>{drag=false;cropCanvas.style.cursor='grab';};cropCanvas.addEventListener('pointerup',end);cropCanvas.addEventListener('pointercancel',end);}
+
+/* ---------- create tools (with per-cell adjust) ---------- */
 async function makeBirthday(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
-  openPicker({photos:ph,min:1,max:1,title:'생일 카드에 넣을 사진을 골라요',cb:s=>renderBirthday(p,s[0].dataUrl)});}
-async function renderBirthday(p,url){await ensureFont();const img=await loadImg(url);const S=1080,c=mkCanvas(S,S),x=c.getContext('2d');
+  openPicker({photos:ph,min:1,max:1,title:'생일 카드에 넣을 사진을 골라요',cb:s=>startCrop([{url:s[0].dataUrl,aspect:1,radius:'circle'}],tf=>renderBirthday(p,s[0].dataUrl,tf[0]))});}
+async function renderBirthday(p,url,tf){await ensureFont();const img=await loadImg(url);const S=1080,c=mkCanvas(S,S),x=c.getContext('2d');
   x.fillStyle='#FFF6EF';x.fillRect(0,0,S,S);const cols=['#FF7E67','#5FC9A6','#FFC861','#ED93B1'];
-  for(let i=0;i<46;i++){x.fillStyle=cols[i%4];x.globalAlpha=.85;x.beginPath();x.arc(Math.random()*S,Math.random()*S,6+Math.random()*13,0,7);x.fill();}x.globalAlpha=1;
+  for(let i=0;i<46;i++){x.fillStyle=cols[i%4];x.globalAlpha=.85;x.beginPath();x.arc((i*131%S),(i*197%S),6+(i*13%14),0,7);x.fill();}x.globalAlpha=1;
   x.lineWidth=22;x.strokeStyle='#FF7E67';rrect(x,28,28,S-56,S-56,38);x.stroke();
   x.fillStyle='#5A463B';x.textAlign='center';x.font='400 84px "Jua",sans-serif';x.fillText('🎂 생일 축하해!',S/2,172);
-  const R=290,cx=S/2,cy=502;x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();cover(x,img,cx-R,cy-R,R*2,R*2);x.restore();
+  const R=290,cx=S/2,cy=502;placeImageN(x,img,cx-R,cy-R,R*2,R*2,tf,'circle');
   x.lineWidth=14;x.strokeStyle='#FFC861';x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
   x.fillStyle='#5A463B';x.font='400 96px "Jua",sans-serif';x.fillText(p.name,S/2,892);
   x.fillStyle='#FF7E67';x.font='400 56px "Jua",sans-serif';x.fillText('오늘 '+ageText(p)+'! 🐾',S/2,966);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_birthday.jpg');}
 
 async function makeFourCut(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(ph.length<4){toast('사진 4장 이상이 필요해요');return;}
-  openPicker({photos:ph,min:4,max:4,title:'네컷에 넣을 사진 4장 (탭한 순서대로)',cb:s=>renderFourCut(p,s.map(x=>x.dataUrl))});}
-async function renderFourCut(p,urls){await ensureFont();const W=720,pad=34,gap=22,cell=Math.round((W-pad*2)*0.72);
+  openPicker({photos:ph,min:4,max:4,title:'네컷에 넣을 사진 4장 (탭한 순서대로)',cb:s=>{const A=652/469;
+    startCrop(s.map((it,i)=>({url:it.dataUrl,aspect:A,radius:16,name:(i+1)+'번째'})),tf=>renderFourCut(p,s.map(x=>x.dataUrl),tf));}});}
+async function renderFourCut(p,urls,tf){await ensureFont();const W=720,pad=34,gap=22,cell=Math.round((W-pad*2)*0.72);
   const H=pad+cell*4+gap*3+pad+50,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FF7E67';x.fillRect(0,0,W,H);
-  for(let i=0;i<4;i++){const img=await loadImg(urls[i]);const y=pad+i*(cell+gap);rrect(x,pad,y,W-pad*2,cell,16);x.save();x.clip();cover(x,img,pad,y,W-pad*2,cell);x.restore();}
+  for(let i=0;i<4;i++){const img=await loadImg(urls[i]);const y=pad+i*(cell+gap);placeImageN(x,img,pad,y,W-pad*2,cell,tf[i],16);}
   const t=new Date();x.fillStyle='#fff';x.textAlign='center';x.font='400 40px "Jua",sans-serif';x.fillText(p.name+' 🐾 '+t.getFullYear()+'.'+(t.getMonth()+1)+'.'+t.getDate(),W/2,H-22);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_4cut.jpg');}
 
 async function makeThenNow(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(ph.length<2){toast('사진 2장 이상이 필요해요');return;}
-  openPicker({photos:ph,min:2,max:2,labels:['그때','지금'],title:'먼저 ‘그때’, 그다음 ‘지금’ 사진',cb:s=>renderThenNow(p,s[0].dataUrl,s[1].dataUrl)});}
-async function renderThenNow(p,aUrl,bUrl){await ensureFont();const a=await loadImg(aUrl),b=await loadImg(bUrl);
+  openPicker({photos:ph,min:2,max:2,labels:['그때','지금'],title:'먼저 ‘그때’, 그다음 ‘지금’ 사진',cb:s=>{const A=755/700;
+    startCrop([{url:s[0].dataUrl,aspect:A,radius:20,name:'그때'},{url:s[1].dataUrl,aspect:A,radius:20,name:'지금'}],tf=>renderThenNow(p,s[0].dataUrl,s[1].dataUrl,tf));}});}
+async function renderThenNow(p,aUrl,bUrl,tf){await ensureFont();const a=await loadImg(aUrl),b=await loadImg(bUrl);
   const W=1600,H=920,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,W,H);
   const pad=30,iw=(W-pad*3)/2,iy=110,ih=H-iy-110;
-  rrect(x,pad,iy,iw,ih,20);x.save();x.clip();cover(x,a,pad,iy,iw,ih);x.restore();
-  rrect(x,pad*2+iw,iy,iw,ih,20);x.save();x.clip();cover(x,b,pad*2+iw,iy,iw,ih);x.restore();
+  placeImageN(x,a,pad,iy,iw,ih,tf[0],20);placeImageN(x,b,pad*2+iw,iy,iw,ih,tf[1],20);
   x.fillStyle='#5A463B';x.textAlign='center';x.font='400 58px "Jua",sans-serif';x.fillText('그때',pad+iw/2,80);x.fillText('지금',pad*2+iw+iw/2,80);
   x.fillStyle='#FF7E67';x.font='400 52px "Jua",sans-serif';x.fillText(p.name+' 🐾',W/2,H-40);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_thennow.jpg');}
