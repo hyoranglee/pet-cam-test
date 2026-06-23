@@ -100,6 +100,27 @@
   #light .acts,#result .acts,#player .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
   #light a,#light button,#result a,#result button,#player button{border:2px solid #fff;background:transparent;color:#fff;border-radius:14px;padding:11px 20px;font-family:"Jua";font-size:15px;text-decoration:none;}
   #recHint{color:var(--yellow);font-size:13px;margin-top:10px;min-height:18px;font-family:"Jua";}
+  /* editor */
+  #editor{position:fixed;inset:0;background:var(--cream);display:none;flex-direction:column;z-index:56;max-width:480px;margin:0 auto;}
+  #editor.on{display:flex;}
+  .edtop{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
+  .edtop .ti{font-family:"Jua";font-size:17px;}
+  .edtop button{border:none;background:transparent;font-family:"Jua";font-size:16px;color:var(--muted);}
+  .edtop .save{color:#fff;background:var(--coral);border-radius:12px;padding:8px 18px;}
+  .edcanvas{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden;background:#F4E7DC;}
+  #edCanvas{max-width:100%;max-height:100%;border-radius:14px;box-shadow:var(--shadow);touch-action:none;cursor:grab;}
+  .edtabs{display:flex;gap:6px;padding:8px 12px 0;}
+  .edtab{flex:1;border:none;background:transparent;padding:10px 0;font-family:"Jua";font-size:14px;color:var(--muted);border-radius:12px 12px 0 0;}
+  .edtab.on{color:var(--coral);background:var(--card);}
+  .edpanel{background:var(--card);padding:14px 16px calc(18px + env(safe-area-inset-bottom));min-height:96px;}
+  .edpanel .lab{font-size:12px;color:var(--muted);margin:0 0 8px;}
+  .edrow{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-family:"Jua";font-size:14px;color:var(--ink);}
+  .chip.on{border-color:var(--coral);color:var(--coral);background:#FFF1ED;}
+  .sw-color{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);}
+  .sw-color.on{box-shadow:0 0 0 3px var(--coral);}
+  .edpanel input[type=range]{width:100%;accent-color:var(--coral);}
+  .edpanel .tinput{width:100%;border:2px solid var(--line);border-radius:14px;padding:11px 14px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
   #picker{position:fixed;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;z-index:55;padding:18px;}
   #picker.on{display:flex;}
   .pkbox{background:var(--cream);width:100%;max-width:460px;max-height:84vh;border-radius:24px;display:flex;flex-direction:column;padding:18px;box-shadow:var(--shadow);}
@@ -197,7 +218,7 @@
   <div id="create" style="display:none;">
     <button class="crcard" onclick="makeBirthday()"><span class="emoji">🎂</span><span><span class="ct">생일 카드</span><br><span class="cd">사진 1장으로 생일 축하 카드</span></span></button>
     <button class="crcard" onclick="makeHighlight()"><span class="emoji">🎬</span><span><span class="ct">하이라이트 영상</span><br><span class="cd">고른 사진들로 슬라이드쇼</span></span></button>
-    <button class="crcard" onclick="makeSticker()"><span class="emoji">✨</span><span><span class="ct">스티커 사진</span><br><span class="cd">발바닥·하트·파티 등 5가지 스타일</span></span></button>
+    <button class="crcard" onclick="makeSticker()"><span class="emoji">✨</span><span><span class="ct">사진 꾸미기</span><br><span class="cd">위치·프레임·스티커·글씨 직접 편집</span></span></button>
     <button class="crcard" onclick="makeThenNow()"><span class="emoji">📈</span><span><span class="ct">그때 vs 지금</span><br><span class="cd">두 사진을 골라 나란히</span></span></button>
     <button class="crcard" onclick="makeFourCut()"><span class="emoji">🎞️</span><span><span class="ct">네컷 사진</span><br><span class="cd">사진 4장 골라 인생네컷</span></span></button>
     <p class="crhint">사진을 먼저 몇 장 찍어두면 더 예쁘게 만들어져요 🐾</p>
@@ -273,17 +294,24 @@
 
 <!-- Result -->
 <div id="result"><img id="resImg" alt="">
-  <div id="resStyles" style="display:none;">
-    <button onclick="renderSticker('paws')">🐾 발바닥</button>
-    <button onclick="renderSticker('hearts')">💕 하트</button>
-    <button onclick="renderSticker('stars')">⭐ 반짝</button>
-    <button onclick="renderSticker('party')">🎉 파티</button>
-    <button onclick="renderSticker('speech')">💬 말풍선</button>
-  </div>
   <div class="acts">
     <a id="resDl" download="">저장</a>
+    <button onclick="saveResultToAlbum()">앨범에 추가</button>
     <button onclick="closeResult()">닫기</button>
   </div></div>
+
+<!-- Editor (sticker / decorate) -->
+<div id="editor">
+  <div class="edtop"><button onclick="closeEditor()">취소</button><span class="ti">꾸미기 ✨</span><button class="save" onclick="saveEditor()">완료</button></div>
+  <div class="edcanvas"><canvas id="edCanvas" width="1080" height="1080"></canvas></div>
+  <div class="edtabs">
+    <button class="edtab on" data-p="photo" onclick="edTab('photo')">📷 사진</button>
+    <button class="edtab" data-p="frame" onclick="edTab('frame')">🎨 프레임</button>
+    <button class="edtab" data-p="sticker" onclick="edTab('sticker')">✨ 스티커</button>
+    <button class="edtab" data-p="text" onclick="edTab('text')">💬 글씨</button>
+  </div>
+  <div class="edpanel" id="edPanel"></div>
+</div>
 
 <!-- Player -->
 <div id="player">
@@ -590,9 +618,11 @@ function cover(x,img,dx,dy,dw,dh){const ir=img.width/img.height,dr=dw/dh;let sw,
 async function ensureFont(){try{await document.fonts.load('80px "Jua"');await document.fonts.ready;}catch(e){}}
 function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1900);}
 function needPet(){const p=active();if(!p){toast('먼저 아이를 등록해 주세요');return null;}return p;}
-function showResult(dataUrl,filename,sticker){document.getElementById('resImg').src=dataUrl;const dl=document.getElementById('resDl');dl.href=dataUrl;dl.download=filename;
-  document.getElementById('resStyles').style.display=sticker?'flex':'none';document.getElementById('result').classList.add('on');}
+function showResult(dataUrl,filename){document.getElementById('resImg').src=dataUrl;const dl=document.getElementById('resDl');dl.href=dataUrl;dl.download=filename;
+  document.getElementById('result').classList.add('on');}
 function closeResult(){document.getElementById('result').classList.remove('on');}
+async function saveResultToAlbum(){const pet=active();if(!pet)return;const url=document.getElementById('resImg').src;
+  await idbPut('photos',{id:'p'+Date.now(),petId:pet.id,dataUrl:url,ts:Date.now()});toast('앨범에 추가됐어요!');if(curTab==='album')renderAlbum();}
 
 /* ---------- generic photo picker ---------- */
 let pk=null;
@@ -640,23 +670,73 @@ async function renderThenNow(p,aUrl,bUrl){await ensureFont();const a=await loadI
   x.fillStyle='#FF7E67';x.font='400 52px "Jua",sans-serif';x.fillText(p.name+' 🐾',W/2,H-40);
   showResult(c.toDataURL('image/jpeg',.95),(p.name||'pet')+'_thennow.jpg');}
 
-/* sticker */
-let stkUrl=null,stkPet=null;
+/* ---------- sticker / decorate EDITOR ---------- */
+const FRAMES={cream:{bg:'#FFF6EF',pad:90,border:16,line:'#fff'},white:{bg:'#FFFFFF',pad:64,border:0},
+  coral:{bg:'#FF7E67',pad:80,border:0},mint:{bg:'#5FC9A6',pad:80,border:0},yellow:{bg:'#FFC861',pad:80,border:0},
+  black:{bg:'#2A2320',pad:74,border:0},none:{bg:'#FFF6EF',pad:0,border:0}};
+const STK={none:[],paws:['🐾'],hearts:['💕','💗','❤️'],stars:['⭐','🌟','✨'],party:['🎉','🎂','🎈','⭐'],
+  flowers:['🌸','🌼','🌷'],music:['🎵','🎶'],bones:['🦴','🐾'],snow:['❄️','⛄','✨']};
+const TEXTCOLORS=['#FF7E67','#5FC9A6','#FFC861','#5A463B','#FFFFFF','#ED93B1'];
+const ed={pet:null,img:null,scale:1,ox:0,oy:0,frame:'cream',sticker:'paws',textStyle:'none',text:'',color:'#FF7E67'};
+let edCanvas=null,edWired=false;
+
 async function makeSticker(){const p=needPet();if(!p)return;const ph=await photosFor(p.id);if(!ph.length){toast('사진을 먼저 찍어주세요');return;}
-  openPicker({photos:ph,min:1,max:1,title:'스티커를 붙일 사진을 골라요',cb:s=>{stkPet=p;stkUrl=s[0].dataUrl;renderSticker('paws');}});}
-function scatter(x,S,emojis){x.textAlign='center';x.textBaseline='middle';const N=18;
-  for(let i=0;i<N;i++){const t=i/N*Math.PI*2,r=S*0.455,px=S/2+Math.cos(t)*r,py=S/2+Math.sin(t)*r,sz=42+Math.random()*26;
+  openPicker({photos:ph,min:1,max:1,title:'꾸밀 사진을 골라요',cb:async s=>{await openEditor(p,s[0].dataUrl);}});}
+async function openEditor(pet,url){await ensureFont();ed.pet=pet;ed.img=await loadImg(url);
+  ed.scale=1;ed.ox=0;ed.oy=0;ed.frame='cream';ed.sticker='paws';ed.textStyle='none';ed.text='';ed.color='#FF7E67';
+  edCanvas=document.getElementById('edCanvas');wireEditor();document.getElementById('editor').classList.add('on');edTab('photo');drawEditor();}
+function closeEditor(){document.getElementById('editor').classList.remove('on');}
+function wireEditor(){if(edWired)return;edWired=true;let drag=false,lx=0,ly=0;
+  const pt=e=>{const r=edCanvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(1080/r.width),y:(e.clientY-r.top)*(1080/r.height)};};
+  edCanvas.addEventListener('pointerdown',e=>{drag=true;const p=pt(e);lx=p.x;ly=p.y;edCanvas.setPointerCapture(e.pointerId);edCanvas.style.cursor='grabbing';});
+  edCanvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pt(e);ed.ox+=p.x-lx;ed.oy+=p.y-ly;lx=p.x;ly=p.y;drawEditor();});
+  const end=()=>{drag=false;edCanvas.style.cursor='grab';};
+  edCanvas.addEventListener('pointerup',end);edCanvas.addEventListener('pointercancel',end);}
+
+function drawEditor(){if(!edCanvas)return;const x=edCanvas.getContext('2d'),S=1080,F=FRAMES[ed.frame];
+  x.fillStyle=F.bg;x.fillRect(0,0,S,S);
+  const bx=F.pad,by=F.pad,bw=S-2*F.pad,bh=S-2*F.pad;
+  const img=ed.img,base=Math.max(bw/img.width,bh/img.height),s=base*ed.scale,dw=img.width*s,dh=img.height*s;
+  let dx=bx+(bw-dw)/2+ed.ox,dy=by+(bh-dh)/2+ed.oy;
+  dx=Math.min(bx,Math.max(bx+bw-dw,dx));dy=Math.min(by,Math.max(by+bh-dh,dy));
+  ed.ox=dx-(bx+(bw-dw)/2);ed.oy=dy-(by+(bh-dh)/2);
+  x.save();rrect(x,bx,by,bw,bh,F.pad?28:0);x.clip();x.drawImage(img,dx,dy,dw,dh);x.restore();
+  if(F.border){x.lineWidth=F.border;x.strokeStyle=F.line;rrect(x,bx,by,bw,bh,28);x.stroke();}
+  if(ed.sticker!=='none')scatter(x,S,STK[ed.sticker]);
+  if(ed.text&&ed.textStyle!=='none')drawText(x,S,ed.text,ed.textStyle,ed.color);}
+function scatter(x,S,emojis){if(!emojis.length)return;x.textAlign='center';x.textBaseline='middle';const N=18;
+  for(let i=0;i<N;i++){const t=i/N*Math.PI*2,r=S*0.455,px=S/2+Math.cos(t)*r,py=S/2+Math.sin(t)*r,sz=42+((i*37)%26);
     x.font=`${sz}px "Jua",sans-serif`;x.fillText(emojis[i%emojis.length],px,py);}x.textBaseline='alphabetic';}
-async function renderSticker(style){if(!stkUrl)return;await ensureFont();const img=await loadImg(stkUrl);
-  const S=1080,m=92,c=mkCanvas(S,S),x=c.getContext('2d');x.fillStyle='#FFF6EF';x.fillRect(0,0,S,S);
-  rrect(x,m,m,S-2*m,S-2*m,40);x.save();x.clip();cover(x,img,m,m,S-2*m,S-2*m);x.restore();
-  x.lineWidth=16;x.strokeStyle='#fff';rrect(x,m,m,S-2*m,S-2*m,40);x.stroke();
-  if(style==='speech'){const txt=stkPet.type==='cat'?'야옹!':stkPet.type==='dog'?'멍멍!':'안녕!';
-    x.font='400 62px "Jua",sans-serif';const w=x.measureText(txt).width+80,bx=S-w-60,by=70;
-    x.fillStyle='#fff';rrect(x,bx,by,w,116,32);x.fill();x.beginPath();x.moveTo(bx+60,by+116);x.lineTo(bx+40,by+170);x.lineTo(bx+110,by+116);x.closePath();x.fill();
-    x.fillStyle='#FF7E67';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,bx+w/2,by+58);x.textBaseline='alphabetic';}
-  else{const sets={paws:['🐾'],hearts:['💕','💗','❤️'],stars:['⭐','🌟','✨'],party:['🎉','🎂','🎈','⭐']};scatter(x,S,sets[style]||['🐾']);}
-  showResult(c.toDataURL('image/jpeg',.95),(stkPet.name||'pet')+'_sticker.jpg',true);}
+function wrapText(x,text,maxW){const out=[];text.split('\n').forEach(par=>{const words=par.split(/\s+/);let cur='';
+  for(const w of words){const t=cur?cur+' '+w:w;if(x.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t;}out.push(cur);});return out.length?out:[text];}
+function drawText(x,S,text,style,color){x.textAlign='center';x.font='400 56px "Jua",sans-serif';const lines=wrapText(x,text,S*0.66),lh=66;
+  const tw=Math.max(...lines.map(l=>x.measureText(l).width));
+  if(style==='speech'){const bw=tw+80,bh=lines.length*lh+44,bx=(S-bw)/2,by=66;
+    x.fillStyle='#fff';rrect(x,bx,by,bw,bh,30);x.fill();
+    x.beginPath();x.moveTo(S/2-26,by+bh);x.lineTo(S/2+6,by+bh+46);x.lineTo(S/2+40,by+bh);x.closePath();x.fill();
+    x.fillStyle=color==='#FFFFFF'?'#FF7E67':color;x.textBaseline='middle';lines.forEach((l,i)=>x.fillText(l,S/2,by+26+lh/2+i*lh));x.textBaseline='alphabetic';}
+  else{const bh=lines.length*lh+28,bw=tw+60,by=S-bh-46;x.fillStyle='rgba(0,0,0,.4)';rrect(x,(S-bw)/2,by,bw,bh,22);x.fill();
+    x.fillStyle=color;x.textBaseline='middle';lines.forEach((l,i)=>x.fillText(l,S/2,by+16+lh/2+i*lh));x.textBaseline='alphabetic';}}
+
+function edTab(p){document.querySelectorAll('.edtab').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  const el=document.getElementById('edPanel');let h='';
+  if(p==='photo'){h=`<p class="lab">사진을 드래그해 위치를 옮기고, 슬라이더로 확대해요 (잘림 방지)</p>
+    <input type="range" min="100" max="320" value="${Math.round(ed.scale*100)}" oninput="ed.scale=this.value/100;drawEditor();">`;}
+  else if(p==='frame'){h='<p class="lab">프레임</p><div class="edrow">'+Object.keys(FRAMES).map(k=>{
+    const names={cream:'크림',white:'화이트',coral:'코랄',mint:'민트',yellow:'옐로',black:'블랙',none:'없음'};
+    return `<button class="chip ${ed.frame===k?'on':''}" onclick="ed.frame='${k}';edTab('frame');drawEditor();">${names[k]}</button>`;}).join('')+'</div>';}
+  else if(p==='sticker'){h='<p class="lab">스티커</p><div class="edrow">'+Object.keys(STK).map(k=>{
+    const names={none:'없음',paws:'🐾 발바닥',hearts:'💕 하트',stars:'⭐ 반짝',party:'🎉 파티',flowers:'🌸 꽃',music:'🎵 음표',bones:'🦴 간식',snow:'❄️ 겨울'};
+    return `<button class="chip ${ed.sticker===k?'on':''}" onclick="ed.sticker='${k}';edTab('sticker');drawEditor();">${names[k]}</button>`;}).join('')+'</div>';}
+  else if(p==='text'){h=`<input class="tinput" placeholder="글씨를 입력하세요 (예: 사랑해 ♥)" value="${ed.text.replace(/"/g,'&quot;')}" oninput="ed.text=this.value;if(ed.textStyle==='none')ed.textStyle='speech';edTab('text');drawEditor();">
+    <p class="lab" style="margin-top:12px">모양</p><div class="edrow">
+      <button class="chip ${ed.textStyle==='none'?'on':''}" onclick="ed.textStyle='none';edTab('text');drawEditor();">없음</button>
+      <button class="chip ${ed.textStyle==='speech'?'on':''}" onclick="ed.textStyle='speech';edTab('text');drawEditor();">💬 말풍선</button>
+      <button class="chip ${ed.textStyle==='caption'?'on':''}" onclick="ed.textStyle='caption';edTab('text');drawEditor();">▭ 캡션</button>
+    </div><p class="lab" style="margin-top:12px">색</p><div class="edrow">`+
+    TEXTCOLORS.map(c=>`<button class="sw-color ${ed.color===c?'on':''}" style="background:${c}" onclick="ed.color='${c}';edTab('text');drawEditor();"></button>`).join('')+'</div>';}
+  el.innerHTML=h;}
+function saveEditor(){drawEditor();const url=edCanvas.toDataURL('image/jpeg',.95);closeEditor();showResult(url,(ed.pet.name||'pet')+'_꾸미기.jpg');}
 
 /* highlight */
 let hlRAF=null,hlMusic=null,hlImgs=[],hlPet=null;
